@@ -419,13 +419,17 @@ export async function callClaudeForPlan(
     const reader = response.body!.getReader();
     const decoder = new TextDecoder();
     let fullText = '';
+    let buffer = ''; // 청크 경계에서 잘린 라인 버퍼
 
     while (true) {
       const { done, value } = await reader.read();
       if (done) break;
 
       const chunk = decoder.decode(value, { stream: true });
-      const lines = chunk.split('\n');
+      buffer += chunk;
+      const lines = buffer.split('\n');
+      // 마지막 라인은 불완전할 수 있으므로 버퍼에 보관
+      buffer = lines.pop() || '';
 
       for (const line of lines) {
         if (!line.startsWith('data: ')) continue;
@@ -442,6 +446,24 @@ export async function callClaudeForPlan(
           }
         } catch {
           // JSON parse failure - skip malformed SSE event
+        }
+      }
+    }
+
+    // 버퍼에 남은 마지막 라인 처리
+    if (buffer.startsWith('data: ')) {
+      const jsonStr = buffer.slice(6).trim();
+      if (jsonStr && jsonStr !== '[DONE]') {
+        try {
+          const event = JSON.parse(jsonStr) as {
+            type?: string;
+            delta?: { text?: string };
+          };
+          if (event.type === 'content_block_delta' && event.delta?.text) {
+            fullText += event.delta.text;
+          }
+        } catch {
+          // skip
         }
       }
     }

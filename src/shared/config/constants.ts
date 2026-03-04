@@ -23,8 +23,8 @@ export const LS_THEME_KEY = 'detailcraft_theme';
 export const MODEL_CONFIGS: Record<ModelType, ModelConfig> = {
   fast: {
     name: '⚡ 빠른 생성 (권장)',
-    model: 'gemini-2.0-flash-exp-image-generation',
-    timeout: 60000, // 60초
+    model: 'gemini-2.5-flash-image',
+    timeout: 120000, // 2분
     config: {},
     description: '10~30초, 1K 해상도',
   },
