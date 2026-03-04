@@ -1,0 +1,1 @@
+export { apiInstance } from './instance';
