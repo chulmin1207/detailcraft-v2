@@ -22,22 +22,26 @@ export const LS_THEME_KEY = 'detailcraft_theme';
 // ===== MODEL CONFIGURATIONS =====
 export const MODEL_CONFIGS: Record<ModelType, ModelConfig> = {
   fast: {
-    name: '⚡ 빠른 생성 (권장)',
+    name: '🎨 고품질 이미지 생성',
     model: 'gemini-3.1-flash-image-preview',
-    timeout: 120000, // 2분
-    config: {},
-    description: '나노바나나 2 - 10~30초, 고효율',
-  },
-  quality: {
-    name: '🎨 고품질 (느림)',
-    model: 'gemini-3-pro-image-preview',
     timeout: 180000, // 3분
     config: {
       imageConfig: {
         imageSize: '2K',
       },
     },
-    description: '1~5분, 2K 해상도, 한글 개선',
+    description: '나노바나나 2 - 2K 해상도',
+  },
+  quality: {
+    name: '🎨 고품질 이미지 생성',
+    model: 'gemini-3.1-flash-image-preview',
+    timeout: 180000, // 3분
+    config: {
+      imageConfig: {
+        imageSize: '2K',
+      },
+    },
+    description: '나노바나나 2 - 2K 해상도',
   },
 };
 
