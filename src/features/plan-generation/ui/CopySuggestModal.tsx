@@ -96,7 +96,7 @@ export function CopySuggestModal({
 
       const url = useBackend
         ? `${BACKEND_URL}/api/gemini`
-        : `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${geminiApiKey}`;
+        : `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${geminiApiKey}`;
 
       const requestBody: Record<string, unknown> = {
         contents: [
@@ -112,7 +112,7 @@ export function CopySuggestModal({
       };
 
       if (useBackend) {
-        requestBody.model = 'gemini-2.0-flash';
+        requestBody.model = 'gemini-2.5-flash';
       }
 
       const response = await fetch(url, {

@@ -91,13 +91,13 @@ JSON 형식으로만 답해주세요:
 
     const analysisUrl = useBackend
       ? `${backendUrl}/api/gemini`
-      : `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash-exp:generateContent?key=${geminiApiKey}`;
+      : `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${geminiApiKey}`;
 
     const analysisBody: Record<string, unknown> = {
       contents: [{ parts }],
       generationConfig: { temperature: 0.1 },
     };
-    if (useBackend) analysisBody.model = 'gemini-2.0-flash-exp';
+    if (useBackend) analysisBody.model = 'gemini-2.5-flash';
 
     const response = await fetch(analysisUrl, {
       method: 'POST',
