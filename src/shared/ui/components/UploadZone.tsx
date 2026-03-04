@@ -1,4 +1,4 @@
-import { useRef, useState, useCallback, useEffect } from 'react';
+import { useRef, useState, useCallback } from 'react';
 import { ImagePreview } from './ImagePreview';
 
 interface UploadZoneProps {
@@ -15,9 +15,9 @@ interface UploadZoneProps {
  * 재사용 가능한 이미지 업로드 영역 컴포넌트
  *
  * 기능:
- * 1. 클릭: 첫 번째 클릭 = 포커스 (애니메이션 테두리), 두 번째 클릭 = 파일 선택 창 열기
+ * 1. 클릭하면 파일 선택 창 열기
  * 2. 드래그 앤 드롭
- * 3. Ctrl+V 붙여넣기 (포커스된 상태에서만)
+ * 3. Ctrl+V 붙여넣기 (브라우저 포커스된 상태에서만 — 한 번에 하나만 포커스됨)
  * 4. 포커스 시 .focused 클래스 적용 (index.css에 정의된 borderRotate 애니메이션)
  * 5. 포커스 시 ::after 로 Ctrl+V 힌트 표시
  */
@@ -55,23 +55,13 @@ export function UploadZone({
     [images.length, maxCount, onAdd],
   );
 
-  // 클릭 핸들러: 첫 번째 클릭 = 포커스, 두 번째 클릭 = 파일 선택
+  // 클릭 → 파일 선택 창 열기
   const handleClick = useCallback(
     (e: React.MouseEvent<HTMLDivElement>) => {
-      // 삭제 버튼 클릭 시 무시
       if ((e.target as HTMLElement).closest('.remove-btn')) return;
-
-      e.stopPropagation();
-
-      if (focused) {
-        // 이미 포커스된 상태면 파일 선택 창 열기
-        inputRef.current?.click();
-      } else {
-        // 포커스 설정 (애니메이션 테두리 표시)
-        setFocused(true);
-      }
+      inputRef.current?.click();
     },
-    [focused],
+    [],
   );
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -98,11 +88,13 @@ export function UploadZone({
     }
   };
 
-  // Ctrl+V 붙여넣기 (포커스된 상태에서만 document 레벨에서 캐치)
-  useEffect(() => {
-    if (!focused) return;
+  // 브라우저 네이티브 포커스/블러 — 한 번에 하나만 포커스됨
+  const handleFocus = useCallback(() => setFocused(true), []);
+  const handleBlur = useCallback(() => setFocused(false), []);
 
-    const handler = (e: ClipboardEvent) => {
+  // Ctrl+V 붙여넣기 — onPaste 이벤트로 포커스된 zone에만 동작
+  const handlePaste = useCallback(
+    (e: React.ClipboardEvent) => {
       const items = e.clipboardData?.items;
       if (!items) return;
 
@@ -116,32 +108,9 @@ export function UploadZone({
           break;
         }
       }
-    };
-
-    document.addEventListener('paste', handler);
-    return () => document.removeEventListener('paste', handler);
-  }, [focused, readFiles]);
-
-  // 업로드 존 외부 클릭 시 포커스 해제
-  useEffect(() => {
-    if (!focused) return;
-
-    const handler = (e: MouseEvent) => {
-      if (zoneRef.current && !zoneRef.current.contains(e.target as Node)) {
-        setFocused(false);
-      }
-    };
-
-    // 현재 클릭 이벤트 전파 후 리스너를 등록하도록 setTimeout 사용
-    const timeoutId = setTimeout(() => {
-      document.addEventListener('click', handler);
-    }, 0);
-
-    return () => {
-      clearTimeout(timeoutId);
-      document.removeEventListener('click', handler);
-    };
-  }, [focused]);
+    },
+    [readFiles],
+  );
 
   const hasImages = images.length > 0;
 
@@ -152,6 +121,9 @@ export function UploadZone({
         tabIndex={0}
         role="button"
         onClick={handleClick}
+        onFocus={handleFocus}
+        onBlur={handleBlur}
+        onPaste={handlePaste}
         onDragOver={handleDragOver}
         onDragLeave={handleDragLeave}
         onDrop={handleDrop}
