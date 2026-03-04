@@ -5,6 +5,7 @@
 @custom-variant dark (&:is(.dark *));
 
 @theme inline {
+    /* === shadcn radius tokens === */
     --radius-sm: calc(var(--radius) - 4px);
     --radius-md: calc(var(--radius) - 2px);
     --radius-lg: var(--radius);
@@ -12,6 +13,8 @@
     --radius-2xl: calc(var(--radius) + 8px);
     --radius-3xl: calc(var(--radius) + 12px);
     --radius-4xl: calc(var(--radius) + 16px);
+
+    /* === shadcn color tokens === */
     --color-background: var(--background);
     --color-foreground: var(--foreground);
     --color-card: var(--card);
@@ -43,8 +46,36 @@
     --color-sidebar-accent-foreground: var(--sidebar-accent-foreground);
     --color-sidebar-border: var(--sidebar-border);
     --color-sidebar-ring: var(--sidebar-ring);
+
+    /* === Original custom color tokens === */
+    --color-bg-primary: var(--bg-primary);
+    --color-bg-secondary: var(--bg-secondary);
+    --color-bg-tertiary: var(--bg-tertiary);
+    --color-bg-elevated: var(--bg-elevated);
+    --color-bg-hover: var(--bg-hover);
+    --color-text-primary: var(--text-primary);
+    --color-text-secondary: var(--text-secondary);
+    --color-text-tertiary: var(--text-tertiary);
+    --color-text-quaternary: var(--text-quaternary);
+    --color-accent-primary: var(--accent-primary);
+    --color-accent-primary-hover: var(--accent-primary-hover);
+    --color-accent-secondary: var(--accent-secondary);
+    --color-accent-tertiary: var(--accent-tertiary);
+    --color-accent-success: var(--accent-success);
+    --color-accent-danger: var(--accent-danger);
+    --color-accent-warning: var(--accent-warning);
+    --color-accent-gemini: var(--accent-gemini);
+    --color-border-subtle: var(--border-subtle);
+    --color-border-default: var(--border-default);
+    --color-border-strong: var(--border-strong);
+
+    /* === Original font tokens === */
+    --font-family-display: 'Cormorant Garamond', serif;
+    --font-family-sans: 'Outfit', -apple-system, sans-serif;
+    --font-family-mono: 'JetBrains Mono', monospace;
 }
 
+/* === shadcn :root (OKLch light theme) === */
 :root {
     --radius: 0.625rem;
     --background: oklch(1 0 0);
@@ -78,8 +109,49 @@
     --sidebar-accent-foreground: oklch(0.205 0 0);
     --sidebar-border: oklch(0.922 0 0);
     --sidebar-ring: oklch(0.708 0 0);
+
+    /* === Original dark mode variables (default) === */
+    --bg-primary: #09090b;
+    --bg-secondary: #0c0c0f;
+    --bg-tertiary: #111114;
+    --bg-elevated: #18181b;
+    --bg-hover: #1f1f23;
+    --border-subtle: rgba(255, 255, 255, 0.06);
+    --border-default: rgba(255, 255, 255, 0.1);
+    --border-strong: rgba(255, 255, 255, 0.15);
+    --text-primary: #fafafa;
+    --text-secondary: #a1a1aa;
+    --text-tertiary: #71717a;
+    --text-quaternary: #52525b;
+    --accent-primary: #6366f1;
+    --accent-primary-hover: #818cf8;
+    --accent-secondary: #ec4899;
+    --accent-tertiary: #14b8a6;
+    --accent-success: #10b981;
+    --accent-danger: #ef4444;
+    --accent-warning: #f59e0b;
+    --accent-gemini: #8b5cf6;
+    --gradient-primary: linear-gradient(135deg, #6366f1 0%, #8b5cf6 50%, #ec4899 100%);
+    --gradient-gemini: linear-gradient(135deg, #8b5cf6 0%, #ec4899 50%, #f59e0b 100%);
+    --shadow-lg: 0 8px 32px rgba(0, 0, 0, 0.5);
+    --shadow-glow: 0 0 60px rgba(99, 102, 241, 0.3);
+    --shadow-gemini: 0 0 60px rgba(139, 92, 246, 0.3);
+    --font-display: 'Cormorant Garamond', serif;
+    --font-sans: 'Outfit', -apple-system, sans-serif;
+    --font-mono: 'JetBrains Mono', monospace;
+    --radius-custom-sm: 6px;
+    --radius-custom-md: 10px;
+    --radius-custom-lg: 16px;
+    --radius-custom-xl: 24px;
+    --radius-full: 9999px;
+    --transition-fast: 150ms cubic-bezier(0.4, 0, 0.2, 1);
+    --transition-base: 250ms cubic-bezier(0.4, 0, 0.2, 1);
+    --header-bg: rgba(9, 9, 11, 0.9);
+    --bg-effect-1: rgba(99, 102, 241, 0.08);
+    --bg-effect-2: rgba(236, 72, 153, 0.06);
 }
 
+/* === shadcn .dark theme === */
 .dark {
     --background: oklch(0.145 0 0);
     --foreground: oklch(0.985 0 0);
@@ -114,11 +186,160 @@
     --sidebar-ring: oklch(0.556 0 0);
 }
 
+/* === Original light mode variables === */
+[data-theme="light"] {
+    --bg-primary: #ffffff;
+    --bg-secondary: #f8fafc;
+    --bg-tertiary: #f1f5f9;
+    --bg-elevated: #ffffff;
+    --bg-hover: #e2e8f0;
+    --border-subtle: rgba(0, 0, 0, 0.06);
+    --border-default: rgba(0, 0, 0, 0.1);
+    --border-strong: rgba(0, 0, 0, 0.15);
+    --text-primary: #0f172a;
+    --text-secondary: #475569;
+    --text-tertiary: #64748b;
+    --text-quaternary: #94a3b8;
+    --accent-primary: #4f46e5;
+    --accent-primary-hover: #6366f1;
+    --accent-secondary: #db2777;
+    --accent-tertiary: #0d9488;
+    --accent-success: #059669;
+    --accent-danger: #dc2626;
+    --accent-warning: #d97706;
+    --accent-gemini: #7c3aed;
+    --shadow-lg: 0 8px 32px rgba(0, 0, 0, 0.1);
+    --shadow-glow: 0 0 60px rgba(79, 70, 229, 0.15);
+    --shadow-gemini: 0 0 60px rgba(124, 58, 237, 0.15);
+    --header-bg: rgba(255, 255, 255, 0.9);
+    --bg-effect-1: rgba(79, 70, 229, 0.05);
+    --bg-effect-2: rgba(219, 39, 119, 0.03);
+}
+
+/* === shadcn base layer === */
 @layer base {
-  * {
-    @apply border-border outline-ring/50;
+    * {
+        @apply border-border outline-ring/50;
     }
-  body {
-    @apply bg-background text-foreground;
+    body {
+        @apply bg-background text-foreground;
     }
+}
+
+/* ===== KEYFRAME ANIMATIONS ===== */
+@keyframes borderRotate {
+    0% { background-position: 0% 50%; }
+    100% { background-position: 200% 50%; }
+}
+
+@keyframes borderPulse {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0.5; }
+}
+
+@keyframes fadeIn {
+    from { opacity: 0; transform: translateY(10px); }
+    to { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes modalIn {
+    from { opacity: 0; transform: scale(0.95) translateY(10px); }
+    to { opacity: 1; transform: scale(1) translateY(0); }
+}
+
+@keyframes spin {
+    to { transform: rotate(360deg); }
+}
+
+@keyframes pulse {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0.5; }
+}
+
+@keyframes slideDown {
+    from { opacity: 0; transform: translateY(-10px); }
+    to { opacity: 1; transform: translateY(0); }
+}
+
+/* ===== BASE STYLES ===== */
+html {
+    font-size: 16px;
+    scroll-behavior: smooth;
+    -webkit-font-smoothing: antialiased;
+}
+
+body {
+    font-family: var(--font-sans);
+    background: var(--bg-primary);
+    color: var(--text-primary);
+    line-height: 1.6;
+    min-height: 100vh;
+}
+
+/* ===== SELECTION ===== */
+::selection {
+    background: var(--accent-primary);
+    color: white;
+}
+
+/* ===== SCROLLBAR ===== */
+::-webkit-scrollbar {
+    width: 8px;
+}
+
+::-webkit-scrollbar-track {
+    background: var(--bg-secondary);
+}
+
+::-webkit-scrollbar-thumb {
+    background: var(--bg-hover);
+    border-radius: var(--radius-full);
+}
+
+/* ===== BACKGROUND EFFECTS (pseudo-element) ===== */
+.bg-effects {
+    position: fixed;
+    inset: 0;
+    pointer-events: none;
+    z-index: 0;
+}
+
+.bg-effects::before {
+    content: '';
+    position: absolute;
+    top: -50%;
+    left: -50%;
+    width: 200%;
+    height: 200%;
+    background:
+        radial-gradient(ellipse 800px 600px at 20% 20%, var(--bg-effect-1) 0%, transparent 50%),
+        radial-gradient(ellipse 600px 400px at 80% 30%, var(--bg-effect-2) 0%, transparent 50%);
+}
+
+/* ===== UPLOAD ZONE FOCUS ANIMATION (pseudo-element) ===== */
+.upload-zone.focused {
+    position: relative;
+    border: 3px dashed transparent;
+    background:
+        linear-gradient(var(--bg-tertiary), var(--bg-tertiary)) padding-box,
+        linear-gradient(90deg, var(--accent-primary), var(--accent-gemini), var(--accent-secondary), var(--accent-primary)) border-box;
+    background-size: 100% 100%, 200% 100%;
+    animation: borderRotate 2s linear infinite;
+    box-shadow: 0 0 20px rgba(139, 92, 246, 0.3);
+}
+
+.upload-zone.focused::after {
+    content: '\1F4CB  Ctrl+V 붙여넣기 | 클릭하면 파일 선택';
+    position: absolute;
+    bottom: 8px;
+    left: 50%;
+    transform: translateX(-50%);
+    padding: 6px 14px;
+    background: var(--accent-primary);
+    color: white;
+    font-size: 0.75rem;
+    font-weight: 500;
+    border-radius: var(--radius-full);
+    white-space: nowrap;
+    animation: borderPulse 1.5s ease-in-out infinite;
 }

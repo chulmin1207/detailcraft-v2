@@ -1,4 +1,4 @@
-import { useRef, useState, useCallback } from 'react';
+import { useRef, useState, useCallback, useEffect } from 'react';
 import { ImagePreview } from './ImagePreview';
 
 interface UploadZoneProps {
@@ -13,6 +13,13 @@ interface UploadZoneProps {
 
 /**
  * 재사용 가능한 이미지 업로드 영역 컴포넌트
+ *
+ * 기능:
+ * 1. 클릭: 첫 번째 클릭 = 포커스 (애니메이션 테두리), 두 번째 클릭 = 파일 선택 창 열기
+ * 2. 드래그 앤 드롭
+ * 3. Ctrl+V 붙여넣기 (포커스된 상태에서만)
+ * 4. 포커스 시 .focused 클래스 적용 (index.css에 정의된 borderRotate 애니메이션)
+ * 5. 포커스 시 ::after 로 Ctrl+V 힌트 표시
  */
 export function UploadZone({
   images = [],
@@ -24,6 +31,7 @@ export function UploadZone({
   hint = 'JPG, PNG, WebP (\uCD5C\uB300 10MB)',
 }: UploadZoneProps) {
   const inputRef = useRef<HTMLInputElement>(null);
+  const zoneRef = useRef<HTMLDivElement>(null);
   const [dragover, setDragover] = useState(false);
   const [focused, setFocused] = useState(false);
 
@@ -47,9 +55,24 @@ export function UploadZone({
     [images.length, maxCount, onAdd],
   );
 
-  const handleClick = () => {
-    inputRef.current?.click();
-  };
+  // 클릭 핸들러: 첫 번째 클릭 = 포커스, 두 번째 클릭 = 파일 선택
+  const handleClick = useCallback(
+    (e: React.MouseEvent<HTMLDivElement>) => {
+      // 삭제 버튼 클릭 시 무시
+      if ((e.target as HTMLElement).closest('.remove-btn')) return;
+
+      e.stopPropagation();
+
+      if (focused) {
+        // 이미 포커스된 상태면 파일 선택 창 열기
+        inputRef.current?.click();
+      } else {
+        // 포커스 설정 (애니메이션 테두리 표시)
+        setFocused(true);
+      }
+    },
+    [focused],
+  );
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.files?.length) {
@@ -75,43 +98,63 @@ export function UploadZone({
     }
   };
 
-  const handleFocus = () => setFocused(true);
-  const handleBlur = () => setFocused(false);
+  // Ctrl+V 붙여넣기 (포커스된 상태에서만 document 레벨에서 캐치)
+  useEffect(() => {
+    if (!focused) return;
 
-  const handlePaste = useCallback(
-    (e: React.ClipboardEvent) => {
+    const handler = (e: ClipboardEvent) => {
       const items = e.clipboardData?.items;
       if (!items) return;
 
-      const imageFiles: File[] = [];
       for (const item of items) {
         if (item.type.startsWith('image/')) {
+          e.preventDefault();
           const file = item.getAsFile();
-          if (file) imageFiles.push(file);
+          if (file) {
+            readFiles([file]);
+          }
+          break;
         }
       }
-      if (imageFiles.length > 0) {
-        e.preventDefault();
-        readFiles(imageFiles);
+    };
+
+    document.addEventListener('paste', handler);
+    return () => document.removeEventListener('paste', handler);
+  }, [focused, readFiles]);
+
+  // 업로드 존 외부 클릭 시 포커스 해제
+  useEffect(() => {
+    if (!focused) return;
+
+    const handler = (e: MouseEvent) => {
+      if (zoneRef.current && !zoneRef.current.contains(e.target as Node)) {
+        setFocused(false);
       }
-    },
-    [readFiles],
-  );
+    };
+
+    // 현재 클릭 이벤트 전파 후 리스너를 등록하도록 setTimeout 사용
+    const timeoutId = setTimeout(() => {
+      document.addEventListener('click', handler);
+    }, 0);
+
+    return () => {
+      clearTimeout(timeoutId);
+      document.removeEventListener('click', handler);
+    };
+  }, [focused]);
 
   const hasImages = images.length > 0;
 
   return (
     <div>
       <div
+        ref={zoneRef}
         tabIndex={0}
         role="button"
         onClick={handleClick}
         onDragOver={handleDragOver}
         onDragLeave={handleDragLeave}
         onDrop={handleDrop}
-        onFocus={handleFocus}
-        onBlur={handleBlur}
-        onPaste={handlePaste}
         className={[
           'upload-zone',
           'min-h-[120px] border-2 border-dashed rounded-[16px] p-8 text-center cursor-pointer',

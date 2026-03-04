@@ -310,7 +310,7 @@ export function parseSections(text: string): Section[] {
     sections.push(section);
   }
 
-  // Fallback if parsing fails
+  // Fallback if parsing fails entirely
   if (sections.length === 0) {
     for (let i = 1; i <= 8; i++) {
       sections.push({
@@ -325,6 +325,26 @@ export function parseSections(text: string): Section[] {
         subCopyAlts: [],
       });
     }
+  }
+
+  // Pad to 8 sections if partially parsed (e.g., API returned truncated response)
+  const sectionNames = [
+    '히어로 배너', '문제 제기 / 공감', '솔루션 제시', '베네핏 상세',
+    '제품 상세 / 스펙', '사용 방법 / TPO', '신뢰 요소', '마무리',
+  ];
+  while (sections.length < 8) {
+    const num = sections.length + 1;
+    sections.push({
+      number: num,
+      name: sectionNames[num - 1] || `섹션 ${num}`,
+      purpose: '',
+      headline: '',
+      subCopy: '',
+      visualPrompt:
+        'Product photography, clean background, professional lighting',
+      headlineAlts: [],
+      subCopyAlts: [],
+    });
   }
 
   return sections;
@@ -358,7 +378,7 @@ export async function callClaudeForPlan(
 
   const requestBody = {
     model: 'claude-sonnet-4-20250514',
-    max_tokens: 8000,
+    max_tokens: 16000,
     messages: [
       {
         role: 'user',
