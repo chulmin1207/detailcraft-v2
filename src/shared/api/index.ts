@@ -1,1 +1,1 @@
-export { apiInstance } from './instance';
+export { apiInstance, fetchWithTimeout } from './instance';

@@ -1,20 +1,7 @@
-import { createBrowserRouter, RouterProvider as ReactRouterProvider } from 'react-router-dom';
-import { AppLayout } from '@/widgets/header/ui/AppLayout';
-import { HomePage } from '@/pages/home';
-import { AboutPage } from '@/pages/about';
-
-const basename = import.meta.env.BASE_URL;
-
-const router = createBrowserRouter([
-  {
-    element: <AppLayout />,
-    children: [
-      { path: '/', element: <HomePage /> },
-      { path: '/about', element: <AboutPage /> },
-    ],
-  },
-], { basename });
-
+/**
+ * RouterProvider - 레거시 (더 이상 사용하지 않음)
+ * 앱은 step-based 위저드 네비게이션을 사용합니다.
+ */
 export function RouterProvider() {
-  return <ReactRouterProvider router={router} />;
+  return null;
 }

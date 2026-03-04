@@ -1,1 +1,2 @@
-export { useCounterStore } from './model/store';
+// placeholder removed - counter entity no longer used
+export {};

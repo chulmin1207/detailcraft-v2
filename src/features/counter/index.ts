@@ -1,1 +1,2 @@
-export { Counter } from './ui/Counter';
+// placeholder removed - counter feature no longer used
+export {};

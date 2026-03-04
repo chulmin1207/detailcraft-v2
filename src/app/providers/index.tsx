@@ -8,5 +8,3 @@ export function Providers({ children }: { children: ReactNode }) {
     </QueryProvider>
   );
 }
-
-export { RouterProvider } from './RouterProvider';
