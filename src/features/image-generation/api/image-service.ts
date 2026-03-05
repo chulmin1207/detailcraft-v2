@@ -514,6 +514,14 @@ function shouldIncludeProductImages(mode: VisualMode): boolean {
   }
 }
 
+// designBrief 없을 때 섹션 번호 기반 제품 이미지 포함 여부 판단
+// 1:히어로, 2:공감, 3:솔루션, 4:베네핏, 5:스펙, 6:TPO, 7:신뢰, 8:마무리
+function shouldIncludeProductImagesFallback(sectionNumber: number): boolean {
+  // 제품 이미지 불필요한 섹션: 4(베네핏-아이콘 그리드), 7(신뢰-소셜프루프)
+  const noProductSections = [4, 7];
+  return !noProductSections.includes(sectionNumber);
+}
+
 // visualMode별 프롬프트 가이드
 function getVisualModeGuide(mode: VisualMode): string {
   switch (mode) {
@@ -915,11 +923,21 @@ ${step3Prompt}`;
         (s) => s.sectionNumber === section.number
       ) || designBrief.sectionStrategies[index];
 
-      const visualMode = strategy?.visualMode || 'product-hero';
+      // visualMode가 undefined면 섹션 번호 기반 기본값 사용
+      const DEFAULT_VISUAL_MODES: Record<number, VisualMode> = {
+        1: 'product-hero',
+        2: 'product-detail',
+        3: 'infographic',
+        4: 'infographic',
+        5: 'product-detail',
+        6: 'lifestyle',
+        7: 'social-proof',
+        8: 'emotional',
+      };
+      const visualMode = strategy?.visualMode || DEFAULT_VISUAL_MODES[section.number] || 'product-hero';
       const needsProductImages = shouldIncludeProductImages(visualMode);
 
-      console.log(`[generateSectionImage] section ${section.number}: visualMode="${visualMode}", needsProductImages=${needsProductImages}, strategy=${JSON.stringify(strategy?.visualMode)}`);
-      console.log(`[generateSectionImage] all visualModes:`, designBrief.sectionStrategies.map(s => `${s.sectionNumber}:${s.visualMode}`));
+      console.log(`[generateSectionImage] section ${section.number}: visualMode="${visualMode}" (from=${strategy?.visualMode ? 'brief' : 'default'}), needsProductImages=${needsProductImages}`);
 
       if (needsProductImages) {
         // 제품 이미지가 필요한 모드: product-hero, product-detail, lifestyle
@@ -953,28 +971,34 @@ ${step3Prompt}`;
       }
       // infographic, emotional, social-proof → 제품 이미지 미포함
     } else {
-      // ===== 기존 모드: 각 슬롯 1장씩 =====
-      if (uploadedImages.product.length > 0) {
-        parts.push({ text: '[제품 촬영 이미지 — 이 제품의 외형을 정확히 재현하세요]' });
-        const compressed = await compressImageForAPI(uploadedImages.product[0]);
-        parts.push({
-          inlineData: {
-            mimeType: 'image/jpeg',
-            data: compressed.split(',')[1],
-          },
-        });
-      }
+      // ===== 기존 모드: 섹션 번호 기반으로 제품 이미지 포함 여부 결정 =====
+      const includeProduct = shouldIncludeProductImagesFallback(section.number);
+      console.log(`[generateSectionImage] section ${section.number}: designBrief=NULL, fallback includeProduct=${includeProduct}`);
 
-      if (uploadedImages.package.length > 0) {
-        parts.push({ text: '[패키지 디자인 이미지 — 이 패키지 디자인도 섹션에 반영하세요. 제품 촬영 이미지만 쓰지 말고 이 패키지도 함께 활용하세요]' });
-        const compressed = await compressImageForAPI(uploadedImages.package[0]);
-        parts.push({
-          inlineData: {
-            mimeType: 'image/jpeg',
-            data: compressed.split(',')[1],
-          },
-        });
+      if (includeProduct) {
+        if (uploadedImages.product.length > 0) {
+          parts.push({ text: '[제품 촬영 이미지 — 이 제품의 외형을 정확히 재현하세요]' });
+          const compressed = await compressImageForAPI(uploadedImages.product[0]);
+          parts.push({
+            inlineData: {
+              mimeType: 'image/jpeg',
+              data: compressed.split(',')[1],
+            },
+          });
+        }
+
+        if (uploadedImages.package.length > 0) {
+          parts.push({ text: '[패키지 디자인 이미지 — 이 패키지 디자인도 섹션에 반영하세요. 제품 촬영 이미지만 쓰지 말고 이 패키지도 함께 활용하세요]' });
+          const compressed = await compressImageForAPI(uploadedImages.package[0]);
+          parts.push({
+            inlineData: {
+              mimeType: 'image/jpeg',
+              data: compressed.split(',')[1],
+            },
+          });
+        }
       }
+      // 섹션 4(베네핏), 7(신뢰) → 제품 이미지 미포함
 
       // 레퍼런스 이미지 (기존 방식: 최대 1장)
       const sectionRefs = sectionReferences[index] || [];
