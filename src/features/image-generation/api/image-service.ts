@@ -922,7 +922,7 @@ ${step3Prompt}`;
         // 제품 이미지가 필요한 모드: product-hero, product-detail, lifestyle
         const maxProduct = Math.min(uploadedImages.product.length, 2);
         if (maxProduct > 0) {
-          parts.push({ text: '[제품 촬영 이미지 — 낱개 패키지 형태를 정확히 재현하세요]' });
+          parts.push({ text: '[제품 촬영 이미지 — 이 제품의 외형을 정확히 재현하세요]' });
         }
         for (let i = 0; i < maxProduct; i++) {
           const compressed = await compressImageForAPI(uploadedImages.product[i]);
@@ -936,7 +936,7 @@ ${step3Prompt}`;
 
         const maxPackage = Math.min(uploadedImages.package.length, 2);
         if (maxPackage > 0) {
-          parts.push({ text: '[박스 패키지 이미지 — 이 박스 디자인도 섹션에 반영하세요. 낱개 제품만 쓰지 말고 박스 패키지도 활용하세요]' });
+          parts.push({ text: '[패키지 디자인 이미지 — 이 패키지 디자인도 섹션에 반영하세요. 제품 촬영 이미지만 쓰지 말고 이 패키지도 함께 활용하세요]' });
         }
         for (let i = 0; i < maxPackage; i++) {
           const compressed = await compressImageForAPI(uploadedImages.package[i]);
@@ -952,7 +952,7 @@ ${step3Prompt}`;
     } else {
       // ===== 기존 모드: 각 슬롯 1장씩 =====
       if (uploadedImages.product.length > 0) {
-        parts.push({ text: '[제품 촬영 이미지 — 낱개 패키지 형태를 정확히 재현하세요]' });
+        parts.push({ text: '[제품 촬영 이미지 — 이 제품의 외형을 정확히 재현하세요]' });
         const compressed = await compressImageForAPI(uploadedImages.product[0]);
         parts.push({
           inlineData: {
@@ -963,7 +963,7 @@ ${step3Prompt}`;
       }
 
       if (uploadedImages.package.length > 0) {
-        parts.push({ text: '[박스 패키지 이미지 — 이 박스 디자인도 섹션에 반영하세요. 낱개 제품만 쓰지 말고 박스 패키지도 활용하세요]' });
+        parts.push({ text: '[패키지 디자인 이미지 — 이 패키지 디자인도 섹션에 반영하세요. 제품 촬영 이미지만 쓰지 말고 이 패키지도 함께 활용하세요]' });
         const compressed = await compressImageForAPI(uploadedImages.package[0]);
         parts.push({
           inlineData: {
