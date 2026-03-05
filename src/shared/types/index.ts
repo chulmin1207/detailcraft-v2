@@ -65,11 +65,14 @@ export interface PurchaseAnalysis {
   competitiveDiff: string;
 }
 
+export type VisualMode = 'product-hero' | 'product-detail' | 'infographic' | 'lifestyle' | 'emotional' | 'social-proof';
+
 export interface SectionStrategy {
   sectionNumber: number;
   persuasionRole: string;
   visualMethod: string;
   informationVisualization: string;
+  visualMode: VisualMode;
   visualVariation: {
     backgroundTone: string;
     layoutType: string;
