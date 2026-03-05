@@ -1,7 +1,8 @@
 // ===== DOWNLOAD SERVICE =====
-// 이미지 다운로드 및 ZIP 생성 서비스 (순수 함수, DOM 접근 최소화)
+// 이미지+텍스트 합성 다운로드 및 ZIP 생성 서비스
 
-import { resizeImage, base64ToBlob } from '@/features/image-generation/api/image-service';
+import { base64ToBlob } from '@/features/image-generation/api/image-service';
+import { renderComposite } from './composite-service';
 import type { GeneratedImage, PlatformConfig, Section } from '@/shared/types';
 
 // ===== PLATFORM CONFIGURATIONS =====
@@ -23,6 +24,7 @@ export async function downloadAllImages(
     .map(([i, img]) => ({
       name: `section-${generatedSections[Number(i)].number}-${generatedSections[Number(i)].name.replace(/[^a-zA-Z0-9가-힣]/g, '_')}.png`,
       data: img.data,
+      section: generatedSections[Number(i)],
     }));
 
   if (images.length === 0) {
@@ -33,13 +35,13 @@ export async function downloadAllImages(
   const JSZip = (await import('jszip')).default;
 
   const zip = new JSZip();
-  // 플랫폼별로 폴더 생성 및 리사이즈된 이미지 추가
+  // 플랫폼별로 폴더 생성 및 합성 이미지 추가
   for (const platform of PLATFORM_CONFIGS) {
     const folder = zip.folder(platform.folder)!;
 
     for (const img of images) {
-      const resizedData = await resizeImage(img.data, platform.width);
-      const blob = base64ToBlob(resizedData);
+      const compositeData = await renderComposite(img.data, img.section, platform.width);
+      const blob = base64ToBlob(compositeData);
       folder.file(img.name, blob);
     }
   }
@@ -66,18 +68,20 @@ export async function downloadAllImages(
   };
 }
 
-// ===== 단일 이미지 다운로드 =====
-export function downloadSingle(
+// ===== 단일 이미지 다운로드 (합성) =====
+export async function downloadSingle(
   index: number,
   generatedImages: Record<number, GeneratedImage>,
   generatedSections: Section[]
-): void {
+): Promise<void> {
   const img = generatedImages[index];
   if (!img || img.error) return;
 
   const section = generatedSections[index];
+  const compositeUrl = await renderComposite(img.data, section, 860);
+
   const link = document.createElement('a');
-  link.href = img.data;
+  link.href = compositeUrl;
   link.download = `section-${section.number}-${section.name.replace(/[^a-zA-Z0-9가-힣]/g, '_')}.png`;
   link.click();
 }
