@@ -39,6 +39,7 @@ export function SectionEditor({ section, index }: SectionEditorProps) {
     refStrength,
     useBackend,
     geminiApiKey,
+    designBrief,
   } = useImageStore();
 
   const showToast = useToastStore((s) => s.showToast);
@@ -139,6 +140,7 @@ export function SectionEditor({ section, index }: SectionEditorProps) {
         subCopy: section.subCopy,
         userVisualPrompt: section.visualPrompt,
         targetAudience,
+        designBrief,
       });
 
       setGeneratedImages((prev) => ({
@@ -178,6 +180,7 @@ export function SectionEditor({ section, index }: SectionEditorProps) {
     generatedSections,
     refStrength,
     targetAudience,
+    designBrief,
     setGeneratedImages,
     showToast,
   ]);
