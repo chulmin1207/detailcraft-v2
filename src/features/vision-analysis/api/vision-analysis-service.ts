@@ -165,7 +165,7 @@ sectionStrategies 배열 (8개), 각 항목:
   * "infographic": 아이콘·차트·배지·숫자 중심 — 제품 이미지 없이 순수 정보 전달
   * "lifestyle": 실제 사용 장면, TPO(시간/장소/상황) 연출
   * "emotional": 브랜드 감성·분위기 중심, 제품 최소화 또는 없음
-  * "social-proof": 후기·인증·수상 배지 중심, 제품 이미지 불필요
+  * "social-proof": 고객 후기·별점·추상 신뢰 아이콘 중심 (실제 인증마크/수상 배지 금지), 제품 이미지 불필요
 - visualVariation:
   - backgroundTone: 배경 톤/색상 (이전 섹션과 반드시 다르게)
   - layoutType: 레이아웃 유형 (풀블리드/좌우분할/그리드/중앙집중/원형방사 등, 이전 섹션과 반드시 다르게)
