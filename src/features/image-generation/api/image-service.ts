@@ -367,6 +367,7 @@ export function buildImagePrompt(
     aspectRatioText[selectedAspectRatio] || aspectRatioText['3:4'];
 
   // ===== designBrief가 있으면 새 프롬프트, 없으면 기존 프롬프트 =====
+  console.log(`[buildImagePrompt] section ${section.number}: designBrief=${designBrief ? 'YES' : 'NULL'}`);
   if (designBrief) {
     return buildImagePromptWithBrief(section, index, {
       designBrief,
@@ -739,6 +740,8 @@ export async function generateSectionImage(
     designBrief,
   } = params;
 
+  console.log(`[generateSectionImage] section ${section.number}: designBrief=${designBrief ? 'YES (strategies: ' + designBrief.sectionStrategies?.length + ')' : 'NULL'}, product=${uploadedImages.product.length}, package=${uploadedImages.package.length}`);
+
   let prompt: string;
   const parts: Array<
     | { text: string }
@@ -918,6 +921,9 @@ ${step3Prompt}`;
       if (needsProductImages) {
         // 제품 이미지가 필요한 모드: product-hero, product-detail, lifestyle
         const maxProduct = Math.min(uploadedImages.product.length, 2);
+        if (maxProduct > 0) {
+          parts.push({ text: '[제품 촬영 이미지 — 낱개 패키지 형태를 정확히 재현하세요]' });
+        }
         for (let i = 0; i < maxProduct; i++) {
           const compressed = await compressImageForAPI(uploadedImages.product[i]);
           parts.push({
@@ -929,6 +935,9 @@ ${step3Prompt}`;
         }
 
         const maxPackage = Math.min(uploadedImages.package.length, 2);
+        if (maxPackage > 0) {
+          parts.push({ text: '[박스 패키지 이미지 — 이 박스 디자인도 섹션에 반영하세요. 낱개 제품만 쓰지 말고 박스 패키지도 활용하세요]' });
+        }
         for (let i = 0; i < maxPackage; i++) {
           const compressed = await compressImageForAPI(uploadedImages.package[i]);
           parts.push({
@@ -943,6 +952,7 @@ ${step3Prompt}`;
     } else {
       // ===== 기존 모드: 각 슬롯 1장씩 =====
       if (uploadedImages.product.length > 0) {
+        parts.push({ text: '[제품 촬영 이미지 — 낱개 패키지 형태를 정확히 재현하세요]' });
         const compressed = await compressImageForAPI(uploadedImages.product[0]);
         parts.push({
           inlineData: {
@@ -953,6 +963,7 @@ ${step3Prompt}`;
       }
 
       if (uploadedImages.package.length > 0) {
+        parts.push({ text: '[박스 패키지 이미지 — 이 박스 디자인도 섹션에 반영하세요. 낱개 제품만 쓰지 말고 박스 패키지도 활용하세요]' });
         const compressed = await compressImageForAPI(uploadedImages.package[0]);
         parts.push({
           inlineData: {
