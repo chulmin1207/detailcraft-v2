@@ -918,6 +918,9 @@ ${step3Prompt}`;
       const visualMode = strategy?.visualMode || 'product-hero';
       const needsProductImages = shouldIncludeProductImages(visualMode);
 
+      console.log(`[generateSectionImage] section ${section.number}: visualMode="${visualMode}", needsProductImages=${needsProductImages}, strategy=${JSON.stringify(strategy?.visualMode)}`);
+      console.log(`[generateSectionImage] all visualModes:`, designBrief.sectionStrategies.map(s => `${s.sectionNumber}:${s.visualMode}`));
+
       if (needsProductImages) {
         // 제품 이미지가 필요한 모드: product-hero, product-detail, lifestyle
         const maxProduct = Math.min(uploadedImages.product.length, 2);

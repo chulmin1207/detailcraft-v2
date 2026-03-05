@@ -60,8 +60,14 @@ export function useDesignBriefAnalysis(): void {
       if (abortFlagRef.current) return;
 
       if (brief) {
+        console.log('[DesignBrief] 분석 완료:', {
+          strategies: brief.sectionStrategies?.length,
+          visualModes: brief.sectionStrategies?.map(s => `${s.sectionNumber}:${s.visualMode}`),
+        });
         setDesignBrief(brief);
         showToast('디자인 브리프 분석 완료!', 'success');
+      } else {
+        console.warn('[DesignBrief] 분석 결과 null 반환');
       }
     } catch (err) {
       if (abortFlagRef.current) return;
