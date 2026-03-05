@@ -152,8 +152,176 @@ interface BuildImagePromptOptions {
   targetAudience?: string;
 }
 
+// 카테고리별 연출 스타일 가이드
+const CATEGORY_STYLING: Record<string, {
+  props: string;
+  background: string;
+  mood: string;
+}> = {
+  snack: {
+    props: '과자 부스러기, 원재료(곡물/견과/과일), 소금 알갱이, 나무 도마, 크래프트지',
+    background: '따뜻한 베이지/크림색 톤, 내추럴 텍스처',
+    mood: '맛있는, 바삭한, 먹음직스러운, 간식 타임의 즐거움',
+  },
+  beverage: {
+    props: '얼음 조각, 물방울, 과일 슬라이스, 허브 잎, 유리컵, 이슬 맺힌 표면',
+    background: '시원한 느낌의 연한 블루/민트 또는 깨끗한 화이트 톤',
+    mood: '청량한, 시원한, 상쾌한, 갈증 해소',
+  },
+  instant: {
+    props: '김이 모락모락, 젓가락, 그릇, 양념/소스, 야채 토핑, 주방 소품',
+    background: '따뜻한 아이보리/우드톤, 가정적인 느낌',
+    mood: '든든한, 따뜻한, 간편한, 집밥 같은',
+  },
+  health: {
+    props: '캡슐/알약 클로즈업, 원료 식물/열매, 연구실 플라스크, 자연 배경',
+    background: '깨끗한 화이트/연한 그린/아이보리 톤',
+    mood: '신뢰감, 깨끗한, 건강한, 과학적인',
+  },
+  beauty: {
+    props: '텍스처 발림, 꽃잎, 원료 식물, 유리 질감, 물방울, 실크 천',
+    background: '소프트 핑크/라벤더/크림색 그라데이션',
+    mood: '고급스러운, 촉촉한, 우아한, 피부결이 살아나는',
+  },
+  living: {
+    props: '인테리어 소품, 식물, 깔끔한 선반, 미니멀 오브제',
+    background: '모던한 화이트/라이트그레이/우드톤',
+    mood: '깔끔한, 실용적인, 모던한, 정돈된',
+  },
+  other: {
+    props: '제품과 어울리는 관련 소품',
+    background: '제품 패키지 색상에서 추출한 톤',
+    mood: '전문적인, 신뢰감 있는, 고급스러운',
+  },
+};
+
+// 섹션별 전문 레이아웃 가이드
+const SECTION_LAYOUTS: Record<number, {
+  role: string;
+  layout: string;
+  typography: string;
+  graphicElements: string;
+  productPlacement: string;
+}> = {
+  1: {
+    role: '히어로 배너 — 첫인상, 브랜드 아이덴티티 확립',
+    layout: `화면 상단 40%: 큰 헤드라인 타이포그래피 (볼드, 서체 믹스)
+화면 하단 60%: 제품 패키지 2~3개를 나란히 또는 피라미드로 배치
+제품 주변에 원재료/소품을 자연스럽게 흩뿌리듯 배치 (scattered styling)
+배경은 단일 따뜻한 톤 (베이지/크림/아이보리)`,
+    typography: `헤드라인: 40pt+ 굵은 고딕체, 제품명 또는 핵심 카피
+서브카피: 16pt 라이트체, 헤드라인 바로 아래
+어두운 원형 뱃지 안에 핵심 수치 (예: "단백질 7g", "저당")`,
+    graphicElements: `원형/라운드 뱃지 2~3개 (핵심 스펙 강조)
+제품 뒤편 은은한 그라데이션 또는 방사형 빛`,
+    productPlacement: '제품 패키지 전면 노출, 크고 선명하게, 2~3개 변형 보여주기',
+  },
+  2: {
+    role: '공감/문제 제기 — 타겟 고객의 고민에 공감',
+    layout: `화면을 2~3개 컬러 존으로 분할 (삼각형/대각선/곡선 분할)
+각 존마다 다른 제품 변형 또는 맛/옵션 배치
+"NEW" 또는 강조 뱃지 활용`,
+    typography: `대비되는 컬러 텍스트 (각 존의 배경색에 맞춘 글자색)
+질문형 헤드라인 ("이런 고민 있으시죠?")
+각 존마다 짧은 라벨 텍스트`,
+    graphicElements: `컬러 존 분할선 (대각선, 곡선, 삼각형)
+각 존 안에 맞는 소품/원재료 흩뿌리기
+작은 플래그/스티커 뱃지 ("NEW", "인기")`,
+    productPlacement: '각 컬러 존마다 1개씩 제품 배치, 해당 변형에 맞는 소품과 함께',
+  },
+  3: {
+    role: '핵심 포인트 — POINT.01 스타일 구조화된 베네핏',
+    layout: `상단: "POINT.01 | 핵심키워드" 형태의 구조화된 헤더
+중앙: 큰 숫자 강조 (예: "7g", "30%") + 보조 설명
+하단: 제품 패키지 + 비교 시각화 (예: 달걀 1개 = 1팩)
+깔끔한 그리드 레이아웃`,
+    typography: `"POINT.01" 라벨: 작은 영문 세리프 또는 산세리프, 구분선(|) 포함
+숫자 강조: 60pt+ 초대형 볼드 (컬러 악센트)
+보조 설명: 14pt 라이트체`,
+    graphicElements: `포인트 넘버링 라벨 ("POINT.01 | 더:건강하게")
+비교 인포그래픽 (달걀 = 팝칩 1봉 같은)
+원형 아이콘 + 일러스트 (근육, 설탕, 닭고기 등)`,
+    productPlacement: '제품 패키지 1개 + 비교 대상 소품',
+  },
+  4: {
+    role: '베네핏 상세 — 아이콘 그리드 레이아웃',
+    layout: `2x2 또는 1x3 그리드 레이아웃
+각 칸: 원형 아이콘(일러스트) + 짧은 제목 + 1줄 설명
+그리드 상단에 섹션 헤드라인
+전체적으로 깔끔하고 스캔 가능한 구조`,
+    typography: `섹션 헤드라인: 24pt 볼드
+각 베네핏 제목: 16pt 미디엄
+설명 텍스트: 12pt 라이트
+아이콘 아래 텍스트 중앙 정렬`,
+    graphicElements: `원형 배경의 라인 아이콘 또는 미니 일러스트 (4개)
+예: 💪근육팔, 🍬설탕큐브에X, 🍗닭고기, 🧬분자구조
+각 아이콘에 통일된 악센트 컬러 원형 배경
+아이콘 사이 균일한 간격`,
+    productPlacement: '그리드 아래 또는 옆에 제품 패키지 작게 배치',
+  },
+  5: {
+    role: '제품 상세/스펙 — POINT.02 스타일',
+    layout: `상단: "POINT.02 | 키워드" 구조화 헤더
+좌측: 제품 패키지 대형 이미지 (기울임 또는 3D 각도)
+우측: 스펙 리스트 또는 성분 하이라이트
+하단: 인증/수상 뱃지 나열`,
+    typography: `포인트 라벨 헤더 일관된 스타일 유지
+스펙 수치: 볼드 + 악센트 컬러
+단위: 라이트체로 수치 옆에`,
+    graphicElements: `인증 마크 뱃지 (HACCP, 식약처 등)
+성분 표시 그래픽 (원형 차트, 진행 바)
+깔끔한 구분선 또는 점선`,
+    productPlacement: '제품 패키지 대형, 성분 표시면이 보이도록 각도 조절',
+  },
+  6: {
+    role: '사용법/TPO — 라이프스타일 연출',
+    layout: `헤드라인: 볼드 타이포 "이럴때 OO 하세요!" 스타일
+체크리스트 형태: ✓ 사용 상황 1, ✓ 사용 상황 2, ✓ 사용 상황 3
+옆이나 아래에 제품 라인업 사진
+따뜻한 라이프스타일 분위기`,
+    typography: `헤드라인: 28pt 볼드, 감탄사/명령형 톤
+체크리스트: 16pt, 체크 아이콘 + 텍스트
+각 항목 사이 충분한 간격`,
+    graphicElements: `체크마크(✓) 또는 커스텀 체크 아이콘
+사용 상황 미니 일러스트 (아침, 운동 후, 간식 시간)
+구분선 또는 배경 패턴`,
+    productPlacement: '제품 라인업 3~4개를 일렬로 배치, 상황 연출과 함께',
+  },
+  7: {
+    role: '신뢰/소셜프루프 — POINT.03 스타일',
+    layout: `상단: "POINT.03 | 키워드" 구조화 헤더
+중앙: 핵심 수치 대형 타이포 (만족도 %, 판매량)
+하단: 인증서, 수상 내역, 미디어 로고 나열
+전체적으로 신뢰감 주는 깔끔한 레이아웃`,
+    typography: `핵심 수치: 48pt+ 초대형 볼드 (악센트 컬러)
+보조 텍스트: 14pt
+인증/수상 라벨: 10pt 캡션`,
+    graphicElements: `별점 ★★★★★ 그래픽
+원형 만족도 차트
+인증 마크 뱃지 가로 나열
+신뢰 관련 아이콘 (방패, 체크마크, 메달)`,
+    productPlacement: '제품 패키지와 인증 마크를 함께 배치',
+  },
+  8: {
+    role: '마무리 — 브랜드 정리, 감성 클로징',
+    layout: `미니멀한 구성: 헤드라인 + 제품 뷰티샷
+제품 패키지를 중앙에 프리미엄하게 배치
+주변에 핵심 키워드 해시태그 뱃지 (#키워드1 #키워드2)
+여백을 충분히 활용한 고급스러운 구성`,
+    typography: `감성적인 헤드라인: 28pt 세리프 또는 캘리그래피풍
+해시태그 뱃지: 12pt, 라운드 배경
+서브카피: 16pt 라이트, 브랜드 메시지`,
+    graphicElements: `해시태그 스타일 뱃지 (#군옥수수 #매콤살사 같은)
+미니멀한 장식 라인 또는 프레임
+은은한 그라데이션 배경
+제품 아래 그림자로 고급감`,
+    productPlacement: '제품 패키지 중앙 배치, 뷰티샷 스타일, 깨끗한 배경',
+  },
+};
+
 /**
  * 섹션별 이미지 생성 프롬프트를 빌드하는 핵심 함수
+ * 프로페셔널 한국 이커머스 상세페이지 디자인 품질 목표
  */
 export function buildImagePrompt(
   section: Section,
@@ -185,92 +353,8 @@ export function buildImagePrompt(
   const hasProduct = uploadedImages.product.length > 0;
   const hasPackage = uploadedImages.package.length > 0;
 
-  // 카테고리 매핑 (일반적인 촬영/연출 스타일만)
-  const categoryMap: Record<string, string> = {
-    snack:
-      'Food photography style - appetizing presentation, highlight texture and appeal',
-    beverage:
-      'Beverage photography style - liquid dynamics, condensation, refreshing presentation',
-    instant:
-      'Food photography style - appetizing, convenient meal presentation, steam/warmth',
-    health:
-      'Health/wellness photography style - clean, trustworthy, professional medical aesthetic',
-    beauty:
-      'Beauty/cosmetics photography style - soft lighting, skin-friendly, elegant presentation',
-    living: 'Product photography style - clean, practical, lifestyle context',
-    other: 'Professional e-commerce product photography style',
-  };
-
-  // 섹션별 레이아웃 가이드 (CRO 관점 + 각 섹션마다 다른 스타일)
-  const sectionLayoutGuide: Record<number, string> = {
-    1: `HERO BANNER - 첫인상
-- Large, impactful hero image with product as the star
-- Bold headline at top or center (핵심 약속)
-- Sub-copy visible below headline
-- Premium, trustworthy first impression
-- Product prominently featured
-- NO explicit CTA button in image`,
-
-    2: `PROBLEM/EMPATHY - 공감 유발
-- Lifestyle scene showing the pain point
-- Relatable everyday frustration
-- "이런 고민 있으시죠?" feeling
-- Person-focused, emotional approach
-- Soft, empathetic mood
-- NO product in this section`,
-
-    3: `SOLUTION - 해결책 제시
-- Product as the hero solving the problem
-- Bright, positive, hopeful mood
-- "이제 해결됩니다" transformation feel
-- Before/after concept if applicable
-- Focus on BENEFIT, not selling
-- NO "지금 구매" or CTA buttons`,
-
-    4: `BENEFITS (3가지) - 핵심 베네핏
-- Clean infographic layout
-- 3 benefit boxes or icons
-- Each benefit with icon + short text
-- Scannable, easy to understand
-- Feature + Benefit language
-- Product integrated with benefits`,
-
-    5: `PRODUCT DETAIL / SPEC
-- Close-up product shots
-- Ingredient or material highlight
-- Technical specifications
-- Certifications or quality marks
-- Detailed, informative layout
-- Trust-building details`,
-
-    6: `USAGE / TPO - 사용법
-- Product in use scenario
-- Step-by-step or situation-based
-- Morning/evening, home/office context
-- Practical, relatable scenes
-- Easy to follow visual guide
-- Lifestyle integration`,
-
-    7: `TRUST / SOCIAL PROOF - 신뢰
-- Customer reviews or testimonials
-- Star ratings, satisfaction %
-- Certifications, awards, media
-- "OO만명이 선택" social proof
-- Trust badges prominent
-- NO aggressive CTA`,
-
-    8: `CLOSING - 마무리 정리
-- Product beauty shot
-- Key benefits summary (subtle)
-- Brand message or tagline
-- Clean, premium closing feel
-- Soft invitation, NOT hard sell
-- NO "지금 구매", "바로 주문" buttons`,
-  };
-
-  const layoutGuide =
-    sectionLayoutGuide[section.number] || sectionLayoutGuide[1];
-  const categoryDescription = categoryMap[category] || categoryMap['other'];
+  const catStyle = CATEGORY_STYLING[category] || CATEGORY_STYLING['other'];
+  const sectionLayout = SECTION_LAYOUTS[section.number] || SECTION_LAYOUTS[1];
 
   // 비율 정보
   const aspectRatioText: Record<string, string> = {
@@ -283,105 +367,108 @@ export function buildImagePrompt(
   const ratioDesc =
     aspectRatioText[selectedAspectRatio] || aspectRatioText['3:4'];
 
-  let prompt = `Create a HIGH-QUALITY e-commerce product detail page image for Korean market.
+  let prompt = `You are a professional Korean e-commerce detail page designer.
+Create a SINGLE section image that looks like part of a cohesive, professionally designed product detail page (상세페이지).
 
-=== ⚠️ CRITICAL: IMAGE ASPECT RATIO (MUST FOLLOW) ===
-📐 **${ratioDesc}**
-🎯 GENERATE THE IMAGE IN EXACTLY ${selectedAspectRatio} ASPECT RATIO
-- This is NOT optional - the output image MUST be ${selectedAspectRatio}
-- Do NOT generate square or any other ratio
+=== IMAGE FORMAT ===
+📐 ${ratioDesc} — MUST generate in exactly ${selectedAspectRatio} ratio.
 
-=== CRITICAL: SINGLE SECTION IMAGE ===
-⚠️ THIS IS THE MOST IMPORTANT RULE:
-- Create ONE single focused image for THIS SECTION ONLY
-- DO NOT create a collage or multi-section layout
-- DO NOT combine multiple scenes or stack sections
-- ONE clear visual concept, ONE focused composition
+=== DESIGN SYSTEM (일관된 디자인 시스템) ===
+This image is Section ${section.number} of 8 in a unified detail page.
+ALL sections share the same design language:
+- Background: ${catStyle.background} — consistent warm/neutral tone throughout
+- Mood: ${catStyle.mood}
+- Typography: Modern Korean typography, mix of bold gothic + light sans-serif
+- Color accent: Extract from product packaging (brand primary color)
+- Consistent spacing, margins, and visual rhythm across all sections
 
-=== SECTION-SPECIFIC LAYOUT (MUST FOLLOW) ===
-This is Section ${section.number}: ${section.name}
-${layoutGuide}
+=== SECTION ${section.number}: ${sectionLayout.role} ===
 
-=== PRODUCT CATEGORY ===
-${categoryDescription}
+**레이아웃 구조:**
+${sectionLayout.layout}
 
-=== PRODUCT INFORMATION ===
-Product Name: ${productName}
-Product Features: ${productFeatures}
-Target Audience: ${targetAudience}
+**타이포그래피 가이드:**
+${sectionLayout.typography}
 
-=== TEXT TO DISPLAY IN IMAGE ===
-Main Headline (Korean): ${headline}
-Sub Copy (Korean): ${subCopy}
+**그래픽 디자인 요소:**
+${sectionLayout.graphicElements}
 
-CRITICAL TEXT RULES:
-- ONLY include the headline and sub copy above
-- Korean text must be clear, legible, modern typography
-- DO NOT add section labels like "히어로 배너", "USP", "CTA"
+**제품 배치:**
+${sectionLayout.productPlacement}
 
-⚠️ FORBIDDEN TEXT:
-- "${section.name}", "USP", "제품 상세", "히어로 배너", "솔루션", "CTA", "구매 유도"`;
+=== 제품 정보 ===
+제품명: ${productName}
+제품 특징: ${productFeatures}
+타겟 고객: ${targetAudience}
+카테고리 연출 소품: ${catStyle.props}
+
+=== 텍스트 (한국어, 이미지 안에 렌더링) ===
+헤드라인: ${headline}
+서브카피: ${subCopy}
+
+텍스트 규칙:
+- 위의 헤드라인과 서브카피만 이미지에 포함
+- 한글 타이포그래피: 깔끔하고 현대적, 가독성 높게
+- 섹션 라벨("히어로 배너", "솔루션", "CTA" 등) 절대 표시 금지
+- "USP", "제품 상세", "구매 유도" 같은 메타 텍스트 금지
+
+=== 프로페셔널 디자인 핵심 원칙 ===
+1. **그래픽 디자인**: 단순 사진이 아닌, 그래픽 요소(뱃지, 아이콘, 장식 도형)가 포함된 디자인 작업물
+2. **연출 사진**: 제품 + 원재료/소품을 예술적으로 배치한 스타일드 포토그래피
+3. **일관된 톤앤매너**: 배경색, 서체 스타일, 여백이 다른 섹션과 통일감 유지
+4. **정보 계층**: 헤드라인 > 핵심 수치/뱃지 > 서브카피 > 상세 텍스트 순서
+5. **한국 이커머스 스타일**: 빙그레, CJ, 농심 등 대기업 상세페이지 품질 수준`;
 
   if (hasProduct || hasPackage) {
     prompt += `
 
-=== PRODUCT IMAGES (COLOR SOURCE - HIGHEST PRIORITY) ===
-⚠️ CRITICAL: Extract ALL colors from product/package images.
-- Color palette MUST come from the actual product/package
-- Brand colors from packaging
-- The product must be accurately represented
-- Match the product's actual appearance exactly`;
+=== 제품/패키지 이미지 (최우선 참고) ===
+제공된 제품/패키지 이미지에서:
+- 제품 외형을 정확하게 재현 (형태, 색상, 로고, 패턴)
+- 패키지 색상에서 전체 디자인 컬러 팔레트 추출
+- 제품 브랜드 아이덴티티를 디자인에 반영`;
   }
 
   if (hasRefs) {
     if (refStrength === 'strong') {
       prompt += `
 
-=== REFERENCE IMAGES (STYLE SOURCE) ===
-From the reference images, extract and apply:
-- Overall mood and atmosphere
-- Typography style and text treatment
-- Background style, texture, and gradients
-- Visual composition feeling and layout flow
-- Design aesthetic and quality level
+=== 레퍼런스 이미지 (스타일 소스) ===
+레퍼런스 이미지에서 추출 적용할 요소:
+- 전체 분위기, 레이아웃 구조
+- 타이포그래피 스타일 (서체 믹스, 크기 대비)
+- 그래픽 요소 스타일 (뱃지, 아이콘, 장식)
+- 배경 텍스처와 색감
 
-⚠️ IMPORTANT:
-- Colors must come from PRODUCT images, NOT from references
-- Use reference for STYLE/MOOD/TYPOGRAPHY only`;
+⚠️ 컬러는 반드시 제품 패키지에서 추출. 레퍼런스는 스타일/무드만 참고.`;
     } else {
       prompt += `
 
-=== REFERENCE IMAGES (LAYOUT ONLY) ===
-Use reference images ONLY for layout and composition inspiration.
-DO NOT copy colors, style, or mood from references.
-Use PRODUCT colors and default professional style.`;
+=== 레퍼런스 이미지 (레이아웃 참고만) ===
+레이아웃/구도만 참고. 색상/무드는 제품 기반으로.`;
     }
   }
 
   if (userVisualPrompt.trim()) {
     prompt += `
 
-=== SECTION-SPECIFIC INSTRUCTIONS ===
+=== 섹션별 추가 지시 ===
 ${userVisualPrompt}`;
   }
 
-  // 추가 요청사항 (STEP 1에서 입력한 전체 스타일 가이드)
   if (additionalNotes.trim()) {
     prompt += `
 
-=== GLOBAL STYLE REQUIREMENTS (HIGHEST PRIORITY) ===
-The user has specified the following requirements that MUST be applied:
-${additionalNotes}
-
-IMPORTANT: These global requirements override default styles.`;
+=== 글로벌 스타일 요구사항 (최우선 적용) ===
+${additionalNotes}`;
   }
 
   prompt += `
 
-=== OUTPUT ===
-- High resolution, professional e-commerce quality
-- Clean, polished result for Korean online shopping platforms
-- Make this section visually DISTINCT from other sections`;
+=== 출력 품질 ===
+- 고해상도, 프로페셔널 이커머스 상세페이지 품질
+- 단일 섹션 이미지 (콜라주/다중 섹션 금지)
+- 한국 온라인 쇼핑몰 상세페이지 수준의 완성도`;
 
   return prompt;
 }
