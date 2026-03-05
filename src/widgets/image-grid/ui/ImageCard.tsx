@@ -4,8 +4,6 @@ import { useImageStore } from '@/entities/image';
 import { useToastStore } from '@/features/theme';
 import { downloadSingle } from '@/features/download';
 import { RegenPanel } from './RegenPanel';
-import { TextOverlay } from './TextOverlay';
-import { getOverlayPreset } from '@/shared/config/overlay-presets';
 import type { Section } from '@/shared/types';
 
 interface ImageCardProps {
@@ -55,9 +53,9 @@ export function ImageCard({ index, section, onRegenerate }: ImageCardProps) {
     }
   }, [index, onRegenerate]);
 
-  const handleDownload = useCallback(async () => {
+  const handleDownload = useCallback(() => {
     try {
-      await downloadSingle(index, generatedImages, generatedSections);
+      downloadSingle(index, generatedImages, generatedSections);
     } catch {
       showToast('다운로드에 실패했습니다.', 'error');
     }
@@ -80,14 +78,11 @@ export function ImageCard({ index, section, onRegenerate }: ImageCardProps) {
 
       <div className="p-4 min-h-[200px] flex items-center justify-center bg-bg-tertiary">
         {hasImage ? (
-          <div className="relative overflow-hidden rounded-[6px]">
-            <img
-              src={img.data}
-              alt={section.name}
-              className="max-w-full max-h-[400px] block"
-            />
-            <TextOverlay section={section} preset={getOverlayPreset(section.number)} />
-          </div>
+          <img
+            src={img.data}
+            alt={section.name}
+            className="max-w-full max-h-[250px] rounded-[6px]"
+          />
         ) : (
           <div className="text-center text-text-tertiary">
             <div className="text-[2rem] mb-2">
