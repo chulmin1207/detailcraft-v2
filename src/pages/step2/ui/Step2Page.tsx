@@ -41,6 +41,7 @@ export function Step2Page() {
     refStrength,
     useBackend,
     geminiApiKey,
+    designBrief,
   } = useImageStore();
 
   const showToast = useToastStore((s) => s.showToast);
@@ -106,6 +107,7 @@ export function Step2Page() {
           subCopy: section.subCopy,
           userVisualPrompt: section.visualPrompt,
           targetAudience,
+          designBrief,
         });
 
         setGeneratedImages((prev) => ({
@@ -133,7 +135,7 @@ export function Step2Page() {
     useBackend, geminiApiKey, generatedSections, selectedModel,
     uploadedImages, sectionReferences, selectedAspectRatio,
     productName, category, productFeatures, additionalNotes,
-    refStrength, targetAudience, setGeneratedImages, showToast,
+    refStrength, targetAudience, designBrief, setGeneratedImages, showToast,
   ]);
 
   // Step 3 이동

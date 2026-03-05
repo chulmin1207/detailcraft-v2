@@ -6,6 +6,7 @@ import type {
   AspectRatio,
   RefStrength,
   Step3Options,
+  DesignBrief,
 } from '@/shared/types';
 import { LS_MODEL_KEY, LS_ASPECT_RATIO_KEY, LS_CLAUDE_KEY, LS_GEMINI_KEY } from '@/shared/config/constants';
 
@@ -46,6 +47,14 @@ interface ImageState {
   // ===== 레퍼런스 강도 =====
   refStrength: RefStrength;
   setRefStrength: (strength: RefStrength) => void;
+
+  // ===== 디자인 브리프 (비전 분석) =====
+  designBrief: DesignBrief | null;
+  setDesignBrief: (brief: DesignBrief | null) => void;
+  isAnalyzing: boolean;
+  setIsAnalyzing: (v: boolean) => void;
+  analysisError: string | null;
+  setAnalysisError: (e: string | null) => void;
 
   // ===== Step 3 재생성 상태 =====
   step3References: Record<number, string[]>;
@@ -127,6 +136,14 @@ export const useImageStore = create<ImageState>((set) => ({
   // ===== 레퍼런스 강도 =====
   refStrength: 'strong',
   setRefStrength: (strength) => set({ refStrength: strength }),
+
+  // ===== 디자인 브리프 =====
+  designBrief: null,
+  setDesignBrief: (brief) => set({ designBrief: brief }),
+  isAnalyzing: false,
+  setIsAnalyzing: (v) => set({ isAnalyzing: v }),
+  analysisError: null,
+  setAnalysisError: (e) => set({ analysisError: e }),
 
   // ===== Step 3 재생성 상태 =====
   step3References: {},

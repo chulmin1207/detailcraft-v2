@@ -50,6 +50,43 @@ export interface PlatformConfig {
   width: number;
 }
 
+// ===== 디자인 브리프 (비전 분석 결과) =====
+export interface DesignBrief {
+  purchaseAnalysis: PurchaseAnalysis;
+  sectionStrategies: SectionStrategy[];
+  designGuide: DesignGuide | null;
+  cdReview: string;
+}
+
+export interface PurchaseAnalysis {
+  buyingMotivation: string;
+  purchaseBarriers: string;
+  decisiveMessage: string;
+  competitiveDiff: string;
+}
+
+export interface SectionStrategy {
+  sectionNumber: number;
+  persuasionRole: string;
+  visualMethod: string;
+  informationVisualization: string;
+  visualVariation: {
+    backgroundTone: string;
+    layoutType: string;
+    informationDensity: string;
+    emotionCurve: string;
+  };
+}
+
+export interface DesignGuide {
+  colorUsage: string;
+  typographyAndCopy: string;
+  layoutAndPlacement: string;
+  productPresentation: string;
+  backgroundAndDecoration: string;
+  informationVisualization: string;
+}
+
 // ===== 이미지 분석 결과 =====
 export interface ImageAnalysis {
   productAppearance?: string;
@@ -180,4 +217,5 @@ export interface GenerateImageParams {
   subCopy?: string;
   userVisualPrompt?: string;
   targetAudience?: string;
+  designBrief?: DesignBrief | null;
 }

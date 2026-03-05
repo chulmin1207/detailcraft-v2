@@ -1,13 +1,17 @@
 import { useCallback } from 'react';
 import { useImageStore } from '@/entities/image';
 import { UploadZone } from '@/shared/ui/components/UploadZone';
+import { useDesignBriefAnalysis } from '@/shared/hooks/useDesignBriefAnalysis';
 import type { UploadedImages, RefStrength } from '@/shared/types';
 
 /**
  * 제품 이미지 업로드 컴포넌트
  */
 export function ProductImageUpload() {
-  const { uploadedImages, setUploadedImages, refStrength, setRefStrength } = useImageStore();
+  const { uploadedImages, setUploadedImages, refStrength, setRefStrength, isAnalyzing, designBrief, analysisError } = useImageStore();
+
+  // 이미지 변경 시 자동 비전 분석
+  useDesignBriefAnalysis();
 
   // 이미지 추가 핸들러 팩토리
   const handleAdd = useCallback(
@@ -168,6 +172,25 @@ export function ProductImageUpload() {
             )}
           </div>
         </div>
+
+        {/* 디자인 브리프 분석 상태 */}
+        {isAnalyzing && (
+          <div className="mt-4 p-3 bg-[rgba(99,102,241,0.1)] border border-accent-primary rounded-[12px] flex items-center gap-2">
+            <div className="w-4 h-4 border-2 border-accent-primary/30 border-t-accent-primary rounded-full animate-spin" />
+            <span className="text-sm text-accent-primary">디자인 브리프 분석 중...</span>
+          </div>
+        )}
+        {designBrief && !isAnalyzing && (
+          <div className="mt-4 p-3 bg-[rgba(16,185,129,0.1)] border border-green-500/30 rounded-[12px] flex items-center gap-2">
+            <span className="text-green-400">✓</span>
+            <span className="text-sm text-green-400">디자인 브리프 분석 완료</span>
+          </div>
+        )}
+        {analysisError && !isAnalyzing && (
+          <div className="mt-4 p-3 bg-[rgba(239,68,68,0.1)] border border-red-500/30 rounded-[12px]">
+            <span className="text-sm text-red-400">분석 실패: {analysisError} (기본 모드로 진행됩니다)</span>
+          </div>
+        )}
       </div>
     </div>
   );

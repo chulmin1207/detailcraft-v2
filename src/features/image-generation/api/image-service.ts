@@ -9,6 +9,7 @@ import type {
   Category,
   RefStrength,
   GenerateImageParams,
+  DesignBrief,
 } from '@/shared/types';
 
 // ===== 이미지 압축/처리 함수들 =====
@@ -150,6 +151,7 @@ interface BuildImagePromptOptions {
   subCopy?: string;
   userVisualPrompt?: string;
   targetAudience?: string;
+  designBrief?: DesignBrief | null;
 }
 
 // 카테고리별 연출 스타일 가이드
@@ -341,6 +343,7 @@ export function buildImagePrompt(
     subCopy: inputSubCopy,
     userVisualPrompt: inputVisualPrompt,
     targetAudience = '',
+    designBrief = null,
   } = options;
 
   const headline = inputHeadline || section.headline || '';
@@ -353,9 +356,6 @@ export function buildImagePrompt(
   const hasProduct = uploadedImages.product.length > 0;
   const hasPackage = uploadedImages.package.length > 0;
 
-  const catStyle = CATEGORY_STYLING[category] || CATEGORY_STYLING['other'];
-  const sectionLayout = SECTION_LAYOUTS[section.number] || SECTION_LAYOUTS[1];
-
   // 비율 정보
   const aspectRatioText: Record<string, string> = {
     '1:1': 'SQUARE format (1:1)',
@@ -366,6 +366,28 @@ export function buildImagePrompt(
   };
   const ratioDesc =
     aspectRatioText[selectedAspectRatio] || aspectRatioText['3:4'];
+
+  // ===== designBrief가 있으면 새 프롬프트, 없으면 기존 프롬프트 =====
+  if (designBrief) {
+    return buildImagePromptWithBrief(section, index, {
+      designBrief,
+      productName,
+      productFeatures,
+      targetAudience,
+      headline,
+      subCopy,
+      userVisualPrompt,
+      additionalNotes,
+      ratioDesc,
+      selectedAspectRatio,
+      hasProduct,
+      hasPackage,
+    });
+  }
+
+  // ===== 기존 프롬프트 (designBrief 없을 때 fallback) =====
+  const catStyle = CATEGORY_STYLING[category] || CATEGORY_STYLING['other'];
+  const sectionLayout = SECTION_LAYOUTS[section.number] || SECTION_LAYOUTS[1];
 
   let prompt = `You are a professional Korean e-commerce detail page designer.
 Create a SINGLE section image that looks like part of a cohesive, professionally designed product detail page (상세페이지).
@@ -473,6 +495,128 @@ ${additionalNotes}`;
   return prompt;
 }
 
+/**
+ * DesignBrief 기반 프롬프트 빌드 (새 파이프라인)
+ * - 구매 심리, 섹션별 전략, 디자인 가이드를 활용
+ */
+function buildImagePromptWithBrief(
+  section: Section,
+  index: number,
+  opts: {
+    designBrief: DesignBrief;
+    productName: string;
+    productFeatures: string;
+    targetAudience: string;
+    headline: string;
+    subCopy: string;
+    userVisualPrompt: string;
+    additionalNotes: string;
+    ratioDesc: string;
+    selectedAspectRatio: string;
+    hasProduct: boolean;
+    hasPackage: boolean;
+  }
+): string {
+  const {
+    designBrief, productName, productFeatures, targetAudience,
+    headline, subCopy, userVisualPrompt, additionalNotes,
+    ratioDesc, selectedAspectRatio, hasProduct, hasPackage,
+  } = opts;
+
+  // 현재 섹션의 전략 찾기
+  const strategy = designBrief.sectionStrategies.find(
+    (s) => s.sectionNumber === section.number
+  ) || designBrief.sectionStrategies[index];
+
+  const guide = designBrief.designGuide;
+  const purchase = designBrief.purchaseAnalysis;
+
+  let prompt = `한국 쇼핑몰 상세페이지 섹션 이미지를 생성하세요.
+
+━━ 이미지 포맷 ━━
+📐 ${ratioDesc} — 반드시 ${selectedAspectRatio} 비율로 생성.
+
+━━ 구매 심리 컨텍스트 ━━
+- 구매 동기: ${purchase.buyingMotivation}
+- 결정적 메시지: ${purchase.decisiveMessage}
+- 차별점: ${purchase.competitiveDiff}`;
+
+  if (guide) {
+    prompt += `
+
+━━ 디자인 가이드 (레퍼런스 기반) ━━
+- 컬러 운용: ${guide.colorUsage}
+- 타이포 & 카피: ${guide.typographyAndCopy}
+- 레이아웃 & 배치: ${guide.layoutAndPlacement}
+- 제품 연출: ${guide.productPresentation}
+- 배경 & 장식: ${guide.backgroundAndDecoration}
+- 정보 시각화: ${guide.informationVisualization}`;
+  }
+
+  if (strategy) {
+    prompt += `
+
+━━ 이 섹션 (${section.number}/8) ━━
+[설득 역할] ${strategy.persuasionRole}
+[시각적 방법] ${strategy.visualMethod}
+[정보 시각화] ${strategy.informationVisualization}
+[배경 톤] ${strategy.visualVariation.backgroundTone}
+[레이아웃] ${strategy.visualVariation.layoutType}
+[정보 밀도] ${strategy.visualVariation.informationDensity}
+[감정 곡선] ${strategy.visualVariation.emotionCurve}`;
+  }
+
+  prompt += `
+
+━━ 제품 정보 ━━
+제품명: ${productName}
+제품 특징: ${productFeatures}
+타겟 고객: ${targetAudience}
+
+━━ 텍스트 (한국어, 이미지 안에 렌더링) ━━
+헤드라인: ${headline}
+서브카피: ${subCopy}
+
+텍스트 규칙:
+- 위의 헤드라인과 서브카피만 이미지에 포함
+- 한글 타이포그래피: 깔끔하고 현대적, 가독성 높게
+- 섹션 라벨/메타 텍스트 표시 금지`;
+
+  if (hasProduct || hasPackage) {
+    prompt += `
+
+━━ 제품/패키지 이미지 (최우선) ━━
+첨부된 제품/패키지 이미지에서:
+- 제품 외형을 정확하게 재현 (형태, 색상, 로고, 패턴)
+- 패키지 색상에서 전체 디자인 컬러 팔레트 추출`;
+  }
+
+  if (userVisualPrompt.trim()) {
+    prompt += `
+
+━━ 추가 지시 ━━
+${userVisualPrompt}`;
+  }
+
+  if (additionalNotes.trim()) {
+    prompt += `
+
+━━ 글로벌 스타일 요구사항 ━━
+${additionalNotes}`;
+  }
+
+  prompt += `
+
+━━ 필수 규칙 ━━
+- 고해상도, 프로페셔널 한국 이커머스 상세페이지 품질
+- 단일 섹션 이미지 (콜라주/다중 섹션 금지)
+- 문장형 텍스트 최소화, 타이포/아이콘/그래픽으로 정보 전달
+- 핵심 수치/키워드는 대형 타이포로 강조
+- 한국 온라인 쇼핑몰 상세페이지 수준의 완성도`;
+
+  return prompt;
+}
+
 // ===== 통합 이미지 생성 함수 =====
 
 interface GenerateImageResult {
@@ -510,6 +654,7 @@ export async function generateSectionImage(
     subCopy,
     userVisualPrompt,
     targetAudience,
+    designBrief,
   } = params;
 
   let prompt: string;
@@ -674,48 +819,74 @@ ${step3Prompt}`;
       subCopy,
       userVisualPrompt,
       targetAudience,
+      designBrief,
     });
 
     parts.push({ text: prompt });
 
-    // 제품 이미지 (최대 1장, 압축)
-    if (uploadedImages.product.length > 0) {
-      const compressed = await compressImageForAPI(uploadedImages.product[0]);
-      parts.push({
-        inlineData: {
-          mimeType: 'image/jpeg',
-          data: compressed.split(',')[1],
-        },
-      });
-    }
+    if (designBrief) {
+      // ===== DesignBrief 모드: 더 많은 제품/패키지 이미지, 레퍼런스 생략 =====
+      // 레퍼런스 분석 결과가 이미 프롬프트 텍스트에 포함됨
+      const maxProduct = Math.min(uploadedImages.product.length, 2);
+      for (let i = 0; i < maxProduct; i++) {
+        const compressed = await compressImageForAPI(uploadedImages.product[i]);
+        parts.push({
+          inlineData: {
+            mimeType: 'image/jpeg',
+            data: compressed.split(',')[1],
+          },
+        });
+      }
 
-    // 패키지 이미지 (최대 1장, 압축)
-    if (uploadedImages.package.length > 0) {
-      const compressed = await compressImageForAPI(uploadedImages.package[0]);
-      parts.push({
-        inlineData: {
-          mimeType: 'image/jpeg',
-          data: compressed.split(',')[1],
-        },
-      });
-    }
+      const maxPackage = Math.min(uploadedImages.package.length, 2);
+      for (let i = 0; i < maxPackage; i++) {
+        const compressed = await compressImageForAPI(uploadedImages.package[i]);
+        parts.push({
+          inlineData: {
+            mimeType: 'image/jpeg',
+            data: compressed.split(',')[1],
+          },
+        });
+      }
+    } else {
+      // ===== 기존 모드: 각 슬롯 1장씩 =====
+      if (uploadedImages.product.length > 0) {
+        const compressed = await compressImageForAPI(uploadedImages.product[0]);
+        parts.push({
+          inlineData: {
+            mimeType: 'image/jpeg',
+            data: compressed.split(',')[1],
+          },
+        });
+      }
 
-    // 레퍼런스 이미지 (최대 1장, 압축)
-    const sectionRefs = sectionReferences[index] || [];
-    const refToUse =
-      sectionRefs.length > 0
-        ? sectionRefs[0]
-        : uploadedImages.references.length > 0
-          ? uploadedImages.references[0]
-          : null;
-    if (refToUse) {
-      const compressed = await compressImageForAPI(refToUse);
-      parts.push({
-        inlineData: {
-          mimeType: 'image/jpeg',
-          data: compressed.split(',')[1],
-        },
-      });
+      if (uploadedImages.package.length > 0) {
+        const compressed = await compressImageForAPI(uploadedImages.package[0]);
+        parts.push({
+          inlineData: {
+            mimeType: 'image/jpeg',
+            data: compressed.split(',')[1],
+          },
+        });
+      }
+
+      // 레퍼런스 이미지 (기존 방식: 최대 1장)
+      const sectionRefs = sectionReferences[index] || [];
+      const refToUse =
+        sectionRefs.length > 0
+          ? sectionRefs[0]
+          : uploadedImages.references.length > 0
+            ? uploadedImages.references[0]
+            : null;
+      if (refToUse) {
+        const compressed = await compressImageForAPI(refToUse);
+        parts.push({
+          inlineData: {
+            mimeType: 'image/jpeg',
+            data: compressed.split(',')[1],
+          },
+        });
+      }
     }
   }
 

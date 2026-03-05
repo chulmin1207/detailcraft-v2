@@ -37,6 +37,7 @@ export function Step3Page() {
     refStrength,
     useBackend,
     geminiApiKey,
+    designBrief,
   } = useImageStore();
 
   const showToast = useToastStore((s) => s.showToast);
@@ -86,11 +87,12 @@ export function Step3Page() {
       generatedSections,
       refStrength,
       targetAudience,
+      designBrief,
     }),
     [
       uploadedImages, sectionReferences, useBackend, geminiApiKey,
       selectedAspectRatio, productName, category, productFeatures,
-      additionalNotes, generatedSections, refStrength, targetAudience,
+      additionalNotes, generatedSections, refStrength, targetAudience, designBrief,
     ],
   );
 
