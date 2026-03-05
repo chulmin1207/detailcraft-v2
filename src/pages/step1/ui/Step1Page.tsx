@@ -30,7 +30,7 @@ export function Step1Page() {
     goToStep,
   } = useProductStore();
 
-  const { uploadedImages, useBackend, claudeApiKey, geminiApiKey } = useImageStore();
+  const { uploadedImages, useBackend, geminiApiKey } = useImageStore();
   const showToast = useToastStore((s) => s.showToast);
 
   const [loading, setLoading] = useState(false);
@@ -93,11 +93,11 @@ export function Step1Page() {
       // 3. 프롬프트 빌드
       const prompt = buildPlanPrompt(data, imageAnalysis);
 
-      // 4. Claude API 호출 (기획서 생성)
+      // 4. Gemini API 호출 (기획서 생성)
       const planConfig = {
         useBackend,
         backendUrl: BACKEND_URL,
-        claudeApiKey,
+        geminiApiKey,
       };
       const response = await callClaudeForPlan(prompt, planConfig);
 
@@ -128,7 +128,7 @@ export function Step1Page() {
   }, [
     productName, category, priceRange, targetAudience,
     productFeatures, additionalNotes, uploadedImages,
-    useBackend, claudeApiKey, geminiApiKey, animateProgress, showToast,
+    useBackend, geminiApiKey, animateProgress, showToast,
     setGeneratedPlan, setGeneratedSections, goToStep,
   ]);
 
