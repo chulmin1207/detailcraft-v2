@@ -350,39 +350,49 @@ export function parseSections(text: string): Section[] {
   return sections;
 }
 
-// ===== Gemini API 호출 (기획서 생성) =====
-interface CallPlanConfig {
+// ===== Claude API 호출 (기획서 생성) =====
+interface CallClaudeConfig {
   useBackend: boolean;
   backendUrl: string;
-  geminiApiKey: string;
+  claudeApiKey: string;
 }
 
 export async function callClaudeForPlan(
   prompt: string,
-  config: CallPlanConfig
+  config: CallClaudeConfig
 ): Promise<string> {
-  const { useBackend, backendUrl, geminiApiKey } = config;
+  const { useBackend, backendUrl, claudeApiKey } = config;
 
   const url = useBackend
-    ? `${backendUrl}/api/gemini`
-    : `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${geminiApiKey}`;
+    ? `${backendUrl}/api/claude`
+    : 'https://api.anthropic.com/v1/messages';
 
-  const reqBody: Record<string, unknown> = {
-    contents: [{ parts: [{ text: prompt }] }],
-    generationConfig: {
-      temperature: 0.4,
-      maxOutputTokens: 16000,
-    },
+  const headers: Record<string, string> = {
+    'Content-Type': 'application/json',
   };
 
-  if (useBackend) reqBody.model = 'gemini-2.5-flash';
+  if (!useBackend) {
+    headers['x-api-key'] = claudeApiKey;
+    headers['anthropic-version'] = '2023-06-01';
+  }
+
+  const requestBody = {
+    model: 'claude-sonnet-4-20250514',
+    max_tokens: 16000,
+    messages: [
+      {
+        role: 'user',
+        content: prompt,
+      },
+    ],
+  };
 
   const response = await fetchWithTimeout(
     url,
     {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(reqBody),
+      headers,
+      body: JSON.stringify(requestBody),
     },
     180000
   );
@@ -391,8 +401,12 @@ export async function callClaudeForPlan(
     const errorData = (await response.json().catch(() => ({}))) as {
       error?: { message?: string } | string;
     };
+    if (response.status === 401 || response.status === 403)
+      throw new Error('API 키가 유효하지 않습니다.');
     if (response.status === 429)
       throw new Error('요청 한도 초과. 잠시 후 다시 시도해주세요.');
+    if (response.status === 504)
+      throw new Error('서버 타임아웃. 잠시 후 다시 시도해주세요.');
     const errorMessage =
       typeof errorData.error === 'object'
         ? errorData.error?.message
@@ -400,17 +414,65 @@ export async function callClaudeForPlan(
     throw new Error(errorMessage || '알 수 없는 오류');
   }
 
-  const data = (await response.json()) as {
-    candidates?: Array<{
-      content?: {
-        parts?: Array<{ text?: string }>;
-      };
-    }>;
-  };
+  // 백엔드가 SSE 스트림을 반환하므로 파싱하여 텍스트 추출
+  if (useBackend) {
+    const reader = response.body!.getReader();
+    const decoder = new TextDecoder();
+    let fullText = '';
+    let buffer = '';
 
-  const text = data.candidates?.[0]?.content?.parts?.[0]?.text || '';
-  if (!text) throw new Error('기획서 생성 결과가 비어있습니다.');
-  return text;
+    while (true) {
+      const { done, value } = await reader.read();
+      if (done) break;
+
+      const chunk = decoder.decode(value, { stream: true });
+      buffer += chunk;
+      const lines = buffer.split('\n');
+      buffer = lines.pop() || '';
+
+      for (const line of lines) {
+        if (!line.startsWith('data: ')) continue;
+        const jsonStr = line.slice(6).trim();
+        if (jsonStr === '[DONE]' || !jsonStr) continue;
+
+        try {
+          const event = JSON.parse(jsonStr) as {
+            type?: string;
+            delta?: { text?: string };
+          };
+          if (event.type === 'content_block_delta' && event.delta?.text) {
+            fullText += event.delta.text;
+          }
+        } catch {
+          // skip malformed SSE event
+        }
+      }
+    }
+
+    if (buffer.startsWith('data: ')) {
+      const jsonStr = buffer.slice(6).trim();
+      if (jsonStr && jsonStr !== '[DONE]') {
+        try {
+          const event = JSON.parse(jsonStr) as {
+            type?: string;
+            delta?: { text?: string };
+          };
+          if (event.type === 'content_block_delta' && event.delta?.text) {
+            fullText += event.delta.text;
+          }
+        } catch {
+          // skip
+        }
+      }
+    }
+
+    return fullText;
+  }
+
+  const data = (await response.json()) as {
+    content: Array<{ text: string }>;
+  };
+  return data.content[0].text;
 }
 
 // ===== 제품 이미지 분석 (Gemini Vision) =====
