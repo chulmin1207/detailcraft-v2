@@ -20,6 +20,7 @@ function parseSections(text: string): Section[] {
     const subMatch = content.match(/서브카피:\s*(.+)/);
     const subAltMatch = content.match(/서브카피대안:\s*(.+)/);
     const visualMatch = content.match(/비주얼 지시:\s*([\s\S]+?)(?=\n[가-힣]+:|$)/);
+    const visualAltMatch = content.match(/비주얼지시대안:\s*(.+)/);
 
     const section: Section = {
       number: numMatch ? parseInt(numMatch[1]) : sections.length + 1,
@@ -40,6 +41,12 @@ function parseSections(text: string): Section[] {
             .map((s) => s.trim())
             .filter((s) => s)
         : [],
+      visualPromptAlts: visualAltMatch
+        ? visualAltMatch[1]
+            .split('|')
+            .map((s) => s.trim())
+            .filter((s) => s)
+        : [],
     };
 
     sections.push(section);
@@ -56,6 +63,7 @@ function parseSections(text: string): Section[] {
         visualPrompt: 'Product photography, clean background, professional lighting',
         headlineAlts: [],
         subCopyAlts: [],
+        visualPromptAlts: [],
       });
     }
   }

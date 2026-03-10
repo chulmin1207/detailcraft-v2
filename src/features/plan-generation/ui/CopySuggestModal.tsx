@@ -9,7 +9,7 @@ interface CopySuggestModalProps {
   isOpen: boolean;
   onClose: () => void;
   sectionIndex: number;
-  type: 'headline' | 'subcopy';
+  type: 'headline' | 'subcopy' | 'visual';
 }
 
 /**
@@ -34,7 +34,11 @@ export function CopySuggestModal({
     if (isOpen && sectionIndex != null && generatedSections[sectionIndex]) {
       const section = generatedSections[sectionIndex];
       const alts =
-        type === 'headline' ? section.headlineAlts : section.subCopyAlts;
+        type === 'headline'
+          ? section.headlineAlts
+          : type === 'subcopy'
+            ? section.subCopyAlts
+            : section.visualPromptAlts;
       setSuggestions(alts && alts.length > 0 ? [...alts] : []);
       setError(null);
       setLoading(false);
@@ -47,14 +51,16 @@ export function CopySuggestModal({
         const updated = [...prev];
         if (type === 'headline') {
           updated[sectionIndex] = { ...updated[sectionIndex], headline: copy };
-        } else {
+        } else if (type === 'subcopy') {
           updated[sectionIndex] = { ...updated[sectionIndex], subCopy: copy };
+        } else {
+          updated[sectionIndex] = { ...updated[sectionIndex], visualPrompt: copy };
         }
         return updated;
       });
 
       onClose();
-      showToast('카피가 적용되었습니다!', 'success');
+      showToast(type === 'visual' ? '비주얼 지시가 적용되었습니다!' : '카피가 적용되었습니다!', 'success');
     },
     [sectionIndex, type, setGeneratedSections, onClose, showToast],
   );
@@ -72,7 +78,14 @@ export function CopySuggestModal({
     setError(null);
 
     try {
-      const prompt = `당신은 e-커머스 상세페이지 전문 카피라이터입니다.
+      const requestTypeLabel = type === 'headline' ? '헤드라인' : type === 'subcopy' ? '서브카피' : '비주얼 지시(프롬프트)';
+      const conditions = type === 'headline'
+        ? '- 15자 이내의 임팩트 있는 문구\n- 각각 다른 스타일과 톤으로 다양하게 작성\n- 구매 욕구를 자극하는 문구'
+        : type === 'subcopy'
+          ? '- 40자 이내의 보조 설명\n- 각각 다른 스타일과 톤으로 다양하게 작성\n- 구매 욕구를 자극하는 문구'
+          : '- 각 지시는 이미지 생성 AI에게 전달되는 상세한 시각적 지시문\n- 레이아웃, 색감, 구도, 분위기, 제품 배치 방식 등을 구체적으로 포함\n- 각각 다른 스타일과 접근 방식으로 다양하게 작성\n- 50~100자 내외';
+
+      const prompt = `당신은 e-커머스 상세페이지 전문 ${type === 'visual' ? '아트디렉터' : '카피라이터'}입니다.
 
 ## 제품 정보
 - 제품명: ${productName || ''}
@@ -83,13 +96,11 @@ export function CopySuggestModal({
 - 섹션 목적: ${section.purpose}
 
 ## 요청
-이 섹션에 적합한 ${type === 'headline' ? '헤드라인' : '서브카피'}을 10개 추천해주세요.
+이 섹션에 적합한 ${requestTypeLabel}을 10개 추천해주세요.
 
 ## 조건
-- ${type === 'headline' ? '15자 이내의 임팩트 있는 문구' : '40자 이내의 보조 설명'}
-- 각각 다른 스타일과 톤으로 다양하게 작성
+${conditions}
 - 한국어로 작성
-- 구매 욕구를 자극하는 문구
 
 ## 출력 형식 (JSON 배열만 출력, 다른 텍스트 없이)
 ["첫번째", "두번째", "세번째", "네번째", "다섯번째", "여섯번째", "일곱번째", "여덟번째", "아홉번째", "열번째"]`;
@@ -140,10 +151,15 @@ export function CopySuggestModal({
             ...updated[sectionIndex],
             headlineAlts: newSuggestions,
           };
-        } else {
+        } else if (type === 'subcopy') {
           updated[sectionIndex] = {
             ...updated[sectionIndex],
             subCopyAlts: newSuggestions,
+          };
+        } else {
+          updated[sectionIndex] = {
+            ...updated[sectionIndex],
+            visualPromptAlts: newSuggestions,
           };
         }
         return updated;
@@ -169,7 +185,7 @@ export function CopySuggestModal({
     showToast,
   ]);
 
-  const typeLabel = type === 'headline' ? '헤드라인' : '서브카피';
+  const typeLabel = type === 'headline' ? '헤드라인' : type === 'subcopy' ? '서브카피' : '비주얼 지시';
 
   return (
     <Modal isOpen={isOpen} onClose={onClose} title={`${typeLabel} 대안`}>

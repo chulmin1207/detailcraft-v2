@@ -7,6 +7,7 @@ import { generateSectionImage } from '@/features/image-generation';
 import { UploadZone } from '@/shared/ui/components/UploadZone';
 import { ModelSelector } from '@/features/image-generation';
 import { BACKEND_URL } from '@/shared/config/constants';
+import { CopySuggestModal } from '@/features/plan-generation/ui/CopySuggestModal';
 import type { Section, ModelType } from '@/shared/types';
 
 interface SectionEditorProps {
@@ -48,7 +49,7 @@ export function SectionEditor({ section, index }: SectionEditorProps) {
   const [sectionModel, setSectionModel] = useState<ModelType>(selectedModel);
   const [isGenerating, setIsGenerating] = useState(false);
   const [showSuggestModal, setShowSuggestModal] = useState(false);
-  const [suggestType, setSuggestType] = useState<'headline' | 'subcopy'>('headline');
+  const [suggestType, setSuggestType] = useState<'headline' | 'subcopy' | 'visual'>('headline');
 
   const hasImage = generatedImages[index] && !generatedImages[index].error;
   const sectionRefs = sectionReferences[index] || [];
@@ -90,23 +91,12 @@ export function SectionEditor({ section, index }: SectionEditorProps) {
     [index, setSectionReferences],
   );
 
-  const handleSuggestCopy = useCallback((type: 'headline' | 'subcopy') => {
+  const handleSuggestCopy = useCallback((type: 'headline' | 'subcopy' | 'visual') => {
     setSuggestType(type);
     setShowSuggestModal(true);
   }, []);
 
-  const handleApplySuggestion = useCallback(
-    (type: string, value: string) => {
-      if (type === 'headline') {
-        updateSection('headline', value);
-      } else {
-        updateSection('subCopy', value);
-      }
-      setShowSuggestModal(false);
-      showToast('카피가 적용되었습니다!', 'success');
-    },
-    [updateSection, showToast],
-  );
+  // handleApplySuggestion is now handled by CopySuggestModal directly
 
   const handleGenerateImage = useCallback(async () => {
     if (!useBackend && !geminiApiKey) {
@@ -184,10 +174,6 @@ export function SectionEditor({ section, index }: SectionEditorProps) {
     setGeneratedImages,
     showToast,
   ]);
-
-  const alts =
-    suggestType === 'headline' ? section.headlineAlts : section.subCopyAlts;
-  const hasAlts = alts && alts.length > 0;
 
   return (
     <>
@@ -322,18 +308,35 @@ export function SectionEditor({ section, index }: SectionEditorProps) {
               <h4 className="text-[0.85rem] text-text-secondary mb-2 font-medium">
                 &#x1F3A8; 비주얼 지시 (선택사항 - 레퍼런스 이미지 우선 적용)
               </h4>
-              <textarea
-                value={section.visualPrompt || ''}
-                onChange={(e) => updateSection('visualPrompt', e.target.value)}
-                placeholder="추가적인 비주얼 지시가 있다면 입력하세요. 비워두면 레퍼런스 이미지 스타일을 자동으로 분석하여 적용합니다."
-                className="
-                  w-full py-2.5 px-3.5 bg-bg-tertiary border border-border-subtle rounded-[10px]
-                  text-text-primary font-[inherit] text-[0.85rem] min-h-[80px] resize-y
-                  transition-all duration-150 ease-[cubic-bezier(0.4,0,0.2,1)]
-                  focus:outline-none focus:border-accent-primary focus:shadow-[0_0_0_3px_rgba(99,102,241,0.15)]
-                  placeholder:text-text-quaternary
-                "
-              />
+              <div className="flex gap-2 items-start">
+                <textarea
+                  value={section.visualPrompt || ''}
+                  onChange={(e) => updateSection('visualPrompt', e.target.value)}
+                  placeholder="추가적인 비주얼 지시가 있다면 입력하세요. 비워두면 레퍼런스 이미지 스타일을 자동으로 분석하여 적용합니다."
+                  className="
+                    flex-1 py-2.5 px-3.5 bg-bg-tertiary border border-border-subtle rounded-[10px]
+                    text-text-primary font-[inherit] text-[0.85rem] min-h-[80px] resize-y
+                    transition-all duration-150 ease-[cubic-bezier(0.4,0,0.2,1)]
+                    focus:outline-none focus:border-accent-primary focus:shadow-[0_0_0_3px_rgba(99,102,241,0.15)]
+                    placeholder:text-text-quaternary
+                  "
+                />
+                <button
+                  onClick={() => handleSuggestCopy('visual')}
+                  title="AI 비주얼 지시 추천"
+                  className="
+                    py-2.5 px-3.5 border-none rounded-[10px] text-white text-base cursor-pointer
+                    flex-shrink-0 transition-all duration-150
+                    hover:scale-105 hover:shadow-[0_4px_15px_rgba(99,102,241,0.4)]
+                  "
+                  style={{
+                    background:
+                      'linear-gradient(135deg, var(--accent-primary), var(--accent-gemini))',
+                  }}
+                >
+                  &#x2728;
+                </button>
+              </div>
             </div>
 
             <div className="mt-4">
@@ -386,73 +389,12 @@ export function SectionEditor({ section, index }: SectionEditorProps) {
         )}
       </div>
 
-      {showSuggestModal && (
-        <div
-          className="fixed inset-0 bg-black/80 backdrop-blur-[8px] z-[1001] flex items-center justify-center animate-[fadeIn_0.2s_ease]"
-          onClick={() => setShowSuggestModal(false)}
-        >
-          <div
-            className="bg-bg-secondary border border-border-subtle rounded-[24px] w-full max-w-[500px] mx-5 overflow-hidden animate-[modalIn_0.3s_ease]"
-            onClick={(e) => e.stopPropagation()}
-          >
-            <div className="p-4 px-5 border-b border-border-subtle flex justify-between items-center">
-              <span className="font-semibold flex items-center gap-2 text-text-primary">
-                &#x2728;{' '}
-                {suggestType === 'headline' ? '헤드라인' : '서브카피'} 대안
-              </span>
-              <button
-                onClick={() => setShowSuggestModal(false)}
-                className="bg-transparent border-none text-text-tertiary text-2xl cursor-pointer p-0 leading-none hover:text-text-primary"
-              >
-                &times;
-              </button>
-            </div>
-
-            <div className="p-3 max-h-[400px] overflow-y-auto">
-              {hasAlts ? (
-                alts.map((copy, i) => (
-                  <div
-                    key={i}
-                    onClick={() => handleApplySuggestion(suggestType, copy)}
-                    className="
-                      p-3 mb-2 bg-bg-tertiary rounded-[10px] cursor-pointer
-                      border border-transparent
-                      hover:border-accent-gemini hover:bg-[rgba(139,92,246,0.1)]
-                      transition-all duration-150
-                    "
-                  >
-                    <span className="text-sm text-text-primary">{copy}</span>
-                  </div>
-                ))
-              ) : (
-                <div className="p-[30px] text-center text-text-secondary">
-                  <p>&#x1F4A1; 저장된 대안이 없습니다.</p>
-                  <p className="text-[0.8rem] text-text-tertiary mt-1">
-                    기획서를 다시 생성하면 대안 카피가 포함됩니다.
-                  </p>
-                </div>
-              )}
-            </div>
-
-            <div className="p-4 px-5 border-t border-border-subtle bg-bg-tertiary text-center">
-              <p className="text-[0.8rem] text-text-tertiary mb-2">
-                마음에 드는 게 없나요?
-              </p>
-              <button
-                onClick={() => setShowSuggestModal(false)}
-                className="
-                  px-4 py-2 rounded-[10px] text-sm font-medium cursor-pointer
-                  bg-bg-elevated text-text-primary border border-border-default
-                  hover:bg-bg-hover hover:border-border-strong
-                  transition-all duration-150
-                "
-              >
-                닫기
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
+      <CopySuggestModal
+        isOpen={showSuggestModal}
+        onClose={() => setShowSuggestModal(false)}
+        sectionIndex={index}
+        type={suggestType}
+      />
     </>
   );
 }

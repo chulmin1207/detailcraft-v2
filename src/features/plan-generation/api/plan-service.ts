@@ -245,7 +245,8 @@ ${imageAnalysisSection}
 서브카피: 여기에 실제 서브카피 작성
 서브카피대안: 대안1 | 대안2 | 대안3 | 대안4 | 대안5 | 대안6 | 대안7 | 대안8 | 대안9 | 대안10
 CTA문구: 자세히 보기
-비주얼 지시:
+비주얼 지시: 이미지 생성 AI에게 전달할 상세한 시각적 지시문 작성
+비주얼지시대안: 대안1 | 대안2 | 대안3 | 대안4 | 대안5 | 대안6 | 대안7 | 대안8 | 대안9 | 대안10
 [SECTION_END]
 
 위 형식으로 8개 섹션 모두 작성해주세요.
@@ -283,6 +284,7 @@ export function parseSections(text: string): Section[] {
     const visualMatch = content.match(
       /비주얼 지시:\s*([\s\S]+?)(?=\n[가-힣]+:|$)/
     );
+    const visualAltMatch = content.match(/비주얼지시대안:\s*(.+)/);
 
     const number = numMatch ? parseInt(numMatch[1]) : sections.length + 1;
 
@@ -305,6 +307,12 @@ export function parseSections(text: string): Section[] {
             .map((s) => s.trim())
             .filter((s) => s)
         : [],
+      visualPromptAlts: visualAltMatch
+        ? visualAltMatch[1]
+            .split('|')
+            .map((s) => s.trim())
+            .filter((s) => s)
+        : [],
     };
 
     sections.push(section);
@@ -323,6 +331,7 @@ export function parseSections(text: string): Section[] {
           'Product photography, clean background, professional lighting',
         headlineAlts: [],
         subCopyAlts: [],
+        visualPromptAlts: [],
       });
     }
   }
@@ -344,6 +353,7 @@ export function parseSections(text: string): Section[] {
         'Product photography, clean background, professional lighting',
       headlineAlts: [],
       subCopyAlts: [],
+      visualPromptAlts: [],
     });
   }
 

@@ -17,6 +17,7 @@ export interface Section {
   visualPrompt: string;
   headlineAlts: string[];
   subCopyAlts: string[];
+  visualPromptAlts: string[];
 }
 
 // ===== 생성된 이미지 =====
