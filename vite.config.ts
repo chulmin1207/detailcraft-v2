@@ -6,7 +6,7 @@ import path from 'path'
 // https://vite.dev/config/
 export default defineConfig({
   plugins: [react(), tailwindcss()],
-  base: process.env.NODE_ENV === 'production' ? '/detailcraft-v2/' : '/',
+  base: process.env.GITHUB_PAGES === 'true' ? '/detailcraft-v2/' : '/',
   resolve: {
     alias: {
       '@': path.resolve(__dirname, './src'),
