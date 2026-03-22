@@ -94,8 +94,8 @@ export function compressImage(
 // API 전송용 이미지 압축 (더 작은 크기)
 export function compressImageForAPI(
   base64: string,
-  maxWidth: number = 1024,
-  quality: number = 0.65
+  maxWidth: number = 1280,
+  quality: number = 0.8
 ): Promise<string> {
   return new Promise((resolve) => {
     const img = new Image();
@@ -213,15 +213,27 @@ function buildDirectiveBlock(
 
   return `
 
-━━ 섹션 디자인 디렉티브 (${directive.sourceRefCount}장 레퍼런스 분석 기반) ━━
-[레이아웃 패턴] ${directive.layoutPatterns}
-[타이포그래피] ${directive.typographyStyle}
-[컬러 무드] ${directive.colorMood}
-[컴포지션] ${directive.compositionRules}
-[그래픽 요소] ${directive.graphicElements}
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+★★★ 섹션 디자인 디렉티브 (${directive.sourceRefCount}장 레퍼런스 분석 기반) ★★★
+이 디렉티브는 실제 레퍼런스 이미지 분석 결과입니다. 반드시 따르세요.
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
-★ 위 디렉티브는 레퍼런스 이미지들의 공통 디자인 패턴을 종합한 것입니다.
-★ 이 스타일을 기반으로 하되, 제품 색상/패키지는 반드시 실제 분석 결과를 따르세요.`;
+[레이아웃 — 필수 적용] ${directive.layoutPatterns}
+→ 텍스트와 이미지의 배치, 여백, 그리드 구조를 이 패턴대로 구성하세요.
+
+[타이포그래피 — 필수 적용] ${directive.typographyStyle}
+→ 헤드라인/서브카피의 크기 계층, 강조 방식, 서체 스타일을 이대로 디자인하세요.
+
+[컬러 무드 — 참고] ${directive.colorMood}
+→ 전체 분위기/톤은 이 방향으로, 단 제품 색상은 실제 패키지 분석 결과 우선.
+
+[컴포지션 — 필수 적용] ${directive.compositionRules}
+→ 시선 흐름, 중심-주변 배치, 여백 활용을 이 규칙대로 구성하세요.
+
+[그래픽 요소 — 필수 적용] ${directive.graphicElements}
+→ 뱃지, 아이콘, 구분선, 장식 요소를 이 스타일로 제작하세요.
+
+⚠️ 위 디렉티브 + 첨부된 레퍼런스 이미지를 동시에 참고하여, 레퍼런스 수준의 완성도를 달성하세요.`;
 }
 
 // imageAnalysis에서 제품 외형 + 색상 제약 블록 생성
@@ -831,7 +843,9 @@ ${sectionLayout.productPlacement}
 - 제품 브랜드 아이덴티티를 디자인에 반영`;
   }
 
-  if (hasRefs) {
+  // 디렉티브 블록이 있으면 더 구체적인 레퍼런스 지시가 포함되므로 일반 안내 생략
+  const hasDirective = sectionDirectives && section.sectionType && sectionDirectives[section.sectionType];
+  if (hasRefs && !hasDirective) {
     if (refStrength === 'strong') {
       prompt += `
 
@@ -921,39 +935,49 @@ function getVisualModeGuide(mode: VisualMode): string {
 
     case 'product-detail':
       return `🔍 제품 디테일 모드:
-- 제품의 원재료, 성분, 질감을 클로즈업으로 보여주기
-- 제품 일부분을 확대하거나 단면/내용물 연출
-- 첨부된 제품 이미지를 참고하되, 디테일 컷/확대 앵글로 변환
-- 소재감, 텍스처가 느껴지도록 사실적 렌더링`;
+- 제품의 원재료, 성분, 질감을 클로즈업으로 보여주는 프로페셔널 포토그래피
+- 제품 단면, 내용물, 텍스처를 고화질 매크로 촬영처럼 연출
+- 첨부된 제품 이미지의 실제 외형을 정확히 재현하되, 디테일 앵글로 변환
+- 소재감, 텍스처, 질감이 생생하게 느껴지는 고퀄리티 사실적 렌더링
+- 조명: 소프트 디퓨즈드 라이팅으로 디테일을 살리되 과도한 그림자 방지
+- 레퍼런스 이미지의 레이아웃/구도를 적극 참고하여 정보 배치`;
 
     case 'infographic':
       return `📊 인포그래픽 모드:
-- ⚠️ 제품 패키지 이미지를 이 섹션에 배치하지 마세요
-- 아이콘, 차트, 배지, 숫자 중심의 순수 정보 시각화
-- 깔끔한 그래픽 디자인 — 일러스트/아이콘/도형으로 정보 전달
-- 비교 인포그래픽, 원형 차트, 진행 바, 체크리스트 등 활용
-- 배경은 단색 또는 그라데이션, 텍스처 최소화`;
+- 프로페셔널 정보 시각화 — 한국 이커머스 상위 상세페이지 수준의 인포그래픽
+- 아이콘, 차트, 배지, 숫자를 활용한 체계적 정보 전달
+- 깔끔한 그래픽 디자인 — 커스텀 일러스트/아이콘/도형으로 고급스럽게
+- 비교표, 체크리스트, 진행 바 등 한눈에 이해되는 시각화 구조
+- 배경은 깔끔한 단색 또는 은은한 그라데이션
+- 레퍼런스 이미지의 정보 배치 구조와 시각적 계층을 적극 반영
+- 텍스트와 그래픽 요소의 균형이 중요 — 과도한 텍스트 지양`;
 
     case 'lifestyle':
       return `🏠 라이프스타일 모드:
-- 실제 사용 장면, TPO(시간/장소/상황) 연출
-- 첨부된 제품 이미지를 참고하여 제품을 자연스러운 생활 환경에 배치
-- 사람 손, 테이블, 부엌, 사무실 등 실생활 컨텍스트
-- 제품은 등장하되 환경/분위기가 주인공`;
+- 실제 사용 장면을 프로페셔널하게 연출 — 광고 촬영 수준의 라이프스타일 포토
+- TPO(시간/장소/상황)에 맞는 자연스러운 배경 설정
+- 첨부된 제품 이미지를 정확히 재현하여 생활 환경에 자연스럽게 배치
+- 소품 배치: 테이블, 식기, 음료, 간식 등으로 분위기 연출
+- 조명: 자연광 또는 따뜻한 인테리어 조명으로 실제 공간 느낌
+- 제품은 자연스럽게 포함하되 라이프스타일 분위기가 주인공
+- 레퍼런스 이미지의 구도와 분위기를 적극 반영`;
 
     case 'emotional':
       return `💫 감성 모드:
-- ⚠️ 제품 패키지 이미지를 이 섹션에 배치하지 마세요
-- 브랜드 감성과 분위기 중심 — 추상적/무드 중심 이미지
-- 컬러, 텍스처, 빛, 자연 요소로 감정 전달
-- 제품 없이 순수하게 무드와 가치를 전달하는 비주얼
-- 시각적 쉼표 역할 — 정보 밀도 낮추기`;
+- 브랜드 감성을 전달하는 고퀄리티 무드 비주얼
+- 컬러, 텍스처, 빛, 자연 요소를 활용한 감성적 분위기 연출
+- 타이포그래피가 핵심 — 헤드라인을 감성적이고 임팩트 있게 디자인
+- 텍스트 자체가 그래픽 디자인 요소로서 시각적 중심이 되어야 함
+- 배경과 텍스트의 대비를 통해 메시지 전달력 극대화
+- 레퍼런스 이미지의 감성적 톤, 여백 활용, 타이포 스타일을 적극 반영
+- 스크롤 중 시각적 쉼표 역할 — 정보 밀도는 낮추되, 디자인 완성도는 높게`;
 
     case 'social-proof':
       return `⭐ 소셜프루프 모드:
-- 첨부된 제품/패키지 이미지의 실제 외형을 정확히 반영하세요
-- 고객 후기 말풍선, 별점 그래픽, 신뢰 아이콘(방패, 체크, 하트) 중심
-- 신뢰감을 주는 깔끔하고 공신력 있는 레이아웃
+- 첨부된 제품/패키지 이미지의 실제 외형을 정확히 반영
+- 고객 후기, 별점, 신뢰 아이콘을 활용한 프로페셔널한 신뢰 구축 레이아웃
+- 말풍선, 카드 UI, 별점 바 등 현대적인 리뷰 시각화
+- 깔끔하고 공신력 있는 레이아웃 — 레퍼런스 이미지의 구조를 적극 참고
 - ⚠️ 실제 인증마크(HACCP, ISO, 식약처 등)를 절대 생성하지 마세요
 - ⚠️ 구체적인 수치(만족도 98%, 판매량 12만 등)를 임의로 만들지 마세요
 - ⚠️ 실존 기관 로고, 수상 배지, 인증서를 만들어내지 마세요`;
@@ -1444,21 +1468,27 @@ ${step3Prompt}`;
       // 섹션 4(베네핏), 7(신뢰) → 제품 이미지 미포함
 
       // 레퍼런스 이미지 (기존 방식: 최대 1장)
-      const sectionRefs = sectionReferences[index] || [];
-      const refToUse =
-        sectionRefs.length > 0
-          ? sectionRefs[0]
-          : uploadedImages.references.length > 0
-            ? uploadedImages.references[0]
-            : null;
-      if (refToUse) {
-        const compressed = await compressImageForAPI(refToUse);
-        parts.push({
-          inlineData: {
-            mimeType: 'image/jpeg',
-            data: safeExtractBase64(compressed),
-          },
-        });
+      // sectionRefFolders에 해당 섹션 타입이 있으면 매칭 방식이 더 정교하므로 스킵
+      const hasFolderRef = section.sectionType && sectionRefFolders
+        && sectionRefFolders[section.sectionType]
+        && sectionRefFolders[section.sectionType].images.length > 0;
+      if (!hasFolderRef) {
+        const sectionRefs = sectionReferences[index] || [];
+        const refToUse =
+          sectionRefs.length > 0
+            ? sectionRefs[0]
+            : uploadedImages.references.length > 0
+              ? uploadedImages.references[0]
+              : null;
+        if (refToUse) {
+          const compressed = await compressImageForAPI(refToUse);
+          parts.push({
+            inlineData: {
+              mimeType: 'image/jpeg',
+              data: safeExtractBase64(compressed),
+            },
+          });
+        }
       }
     }
   }
@@ -1481,7 +1511,13 @@ ${step3Prompt}`;
       const matchSource = folder.matchedIndices?.length ? '제품 매칭' : '품질 기반';
 
       if (repImages.length > 0) {
-        parts.push({ text: `[섹션 레퍼런스 이미지 (${directive.sourceRefCount}장 중 ${matchSource} ${repImages.length}장 선정) — 이 제품에 어울리는 레이아웃/스타일을 참고하되, 색상은 실제 제품 패키지에서 추출]` });
+        parts.push({ text: `★★★ 섹션 레퍼런스 이미지 (${directive.sourceRefCount}장 중 ${matchSource} ${repImages.length}장 선정) ★★★
+이 레퍼런스 이미지들은 최종 디자인의 핵심 기준입니다. 반드시 다음을 추출하여 적용하세요:
+1. 레이아웃 구조: 텍스트-이미지 배치, 여백, 그리드 구성을 최대한 유사하게 따라하세요
+2. 타이포그래피 스타일: 글자 크기 계층, 강조 방식, 서체 느낌을 모방하세요
+3. 그래픽 요소: 뱃지, 아이콘, 구분선, 장식 패턴을 참고하여 유사한 스타일로 제작하세요
+4. 구도와 시선 흐름: 정보 배치 순서와 시각적 계층을 따라하세요
+⚠️ 색상만 제품 패키지에서 추출하고, 나머지 디자인 스타일은 레퍼런스를 최대한 충실히 참고하세요` });
         for (const img of repImages) {
           const compressed = await compressImageForAPI(img);
           parts.push({

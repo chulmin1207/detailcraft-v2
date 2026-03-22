@@ -217,6 +217,7 @@ export const useImageStore = create<ImageState>()(
         sectionAspectRatios: state.sectionAspectRatios,
         designBrief: state.designBrief,
         imageAnalysis: state.imageAnalysis,
+        sectionDirectives: state.sectionDirectives,
       }),
     }
   )

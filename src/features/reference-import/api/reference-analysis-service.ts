@@ -18,7 +18,16 @@ const BATCH_SIZE = 5;
  */
 function safeJsonParse(jsonString: string): unknown | null {
   try {
-    return JSON.parse(jsonString);
+    const result = JSON.parse(jsonString);
+    // Handle double-encoded JSON (string containing JSON)
+    if (typeof result === 'string') {
+      try {
+        return JSON.parse(result);
+      } catch {
+        return result;
+      }
+    }
+    return result;
   } catch {
     // Try to extract JSON from markdown code blocks
     const match = jsonString.match(/```(?:json)?\s*([\s\S]*?)```/);
@@ -128,7 +137,7 @@ async function analyzeReferenceBatch(
   > = [{ text: prompt }];
 
   for (const img of images) {
-    const compressed = await compressImageForAPI(img, 500, 0.4);
+    const compressed = await compressImageForAPI(img, 768, 0.6);
     const base64Data = compressed.replace(/^data:image\/\w+;base64,/, '');
     parts.push({
       inlineData: { mimeType: 'image/jpeg', data: base64Data },
