@@ -1350,6 +1350,32 @@ ${step3Prompt}`;
       sectionRefFolders,
     });
 
+    // ===== 레퍼런스 이미지를 맨 앞에 배치 (최우선 참고) =====
+    let refImageAttached = false;
+    if (section.sectionType && sectionDirectives && sectionRefFolders) {
+      const refDirective = sectionDirectives[section.sectionType];
+      const refFolder = sectionRefFolders[section.sectionType];
+      console.log(`[RefDebug] 섹션 ${section.number} "${section.name}": sectionType="${section.sectionType}", directive=${!!refDirective}, folder=${!!refFolder}, folder.images=${refFolder?.images?.length ?? 0}, matchedIndices=${refFolder?.matchedIndices?.join(',') ?? 'none'}`);
+      if (refDirective && refFolder && refFolder.images.length > 0) {
+        // 제품 매칭 1위 이미지 1장만 선택
+        const bestIdx = refFolder.matchedIndices && refFolder.matchedIndices.length > 0
+          ? refFolder.matchedIndices[0]
+          : refDirective.representativeRefIndices[0];
+        const bestImage = refFolder.images[bestIdx];
+        if (bestImage) {
+          parts.push({ text: `[레퍼런스 디자인] 아래 이미지의 디자인 구조(레이아웃, 타이포그래피, 구도, 그래픽 요소)를 기반으로 현재 제품 버전을 만드세요. 디자인 뼈대는 유지하고, 제품/텍스트/색상만 현재 제품으로 교체하세요.` });
+          const compressed = await compressImageForAPI(bestImage);
+          parts.push({
+            inlineData: {
+              mimeType: 'image/jpeg',
+              data: safeExtractBase64(compressed),
+            },
+          });
+          refImageAttached = true;
+        }
+      }
+    }
+
     parts.push({ text: prompt });
 
     if (designBrief) {
@@ -1463,12 +1489,8 @@ ${step3Prompt}`;
       }
       // 섹션 4(베네핏), 7(신뢰) → 제품 이미지 미포함
 
-      // 레퍼런스 이미지 (기존 방식: 최대 1장)
-      // sectionRefFolders에 해당 섹션 타입이 있으면 매칭 방식이 더 정교하므로 스킵
-      const hasFolderRef = section.sectionType && sectionRefFolders
-        && sectionRefFolders[section.sectionType]
-        && sectionRefFolders[section.sectionType].images.length > 0;
-      if (!hasFolderRef) {
+      // 레퍼런스 이미지 (기존 방식: 최대 1장) — 이미 맨 앞에 첨부된 경우 스킵
+      if (!refImageAttached) {
         const sectionRefs = sectionReferences[index] || [];
         const refToUse =
           sectionRefs.length > 0
@@ -1489,54 +1511,7 @@ ${step3Prompt}`;
     }
   }
 
-  // ===== 섹션별 매칭된 레퍼런스 이미지 첨부 (제품 매칭 기반 > 분석 기반 fallback) =====
-  console.log(`[RefDebug] 섹션 ${section.number} "${section.name}": sectionType="${section.sectionType}", directives keys=${sectionDirectives ? Object.keys(sectionDirectives).join(',') : 'null'}, folders keys=${sectionRefFolders ? Object.keys(sectionRefFolders).join(',') : 'null'}`);
-  if (section.sectionType && sectionDirectives && sectionRefFolders) {
-    const directive = sectionDirectives[section.sectionType];
-    const folder = sectionRefFolders[section.sectionType];
-    console.log(`[RefDebug] 섹션 ${section.number}: directive=${!!directive}, folder=${!!folder}, folder.images=${folder?.images?.length ?? 0}, matchedIndices=${folder?.matchedIndices?.join(',') ?? 'none'}`);
-    if (directive && folder && folder.images.length > 0) {
-      // 매칭된 인덱스 우선, 없으면 분석 시 선정된 대표 인덱스 사용
-      const selectedIndices = folder.matchedIndices && folder.matchedIndices.length > 0
-        ? folder.matchedIndices
-        : [directive.representativeRefIndices[0], directive.representativeRefIndices[1]];
-
-      const repImages = selectedIndices
-        .map((idx) => folder.images[idx])
-        .filter((img): img is string => !!img)
-        .slice(0, 3); // 최대 3장
-
-      const matchSource = folder.matchedIndices?.length ? '제품 매칭' : '품질 기반';
-
-      if (repImages.length > 0) {
-        parts.push({ text: `★★★ 섹션 레퍼런스 이미지 (${directive.sourceRefCount}장 중 ${matchSource} ${repImages.length}장 선정) ★★★
-이 레퍼런스 이미지의 디자인을 기반으로 현재 제품 버전을 만드세요.
-
-핵심 규칙:
-1. 레이아웃 구조를 따르세요: 텍스트 위치, 이미지 배치, 여백, 그리드를 레퍼런스와 동일한 구조로 구성
-2. 타이포그래피 스타일을 따르세요: 헤드라인/서브카피의 크기 비율, 강조 방식, 서체 분위기를 유사하게
-3. 그래픽 요소를 따르세요: 뱃지, 아이콘, 구분선의 스타일과 위치를 유사하게 배치
-4. 전체 분위기와 톤을 따르세요: 고급감, 깔끔함, 정보 밀도 등 레퍼런스의 무드를 유지
-
-바꿀 것:
-- 제품 이미지 → 현재 제품(두부과자 등)으로 교체
-- 텍스트 내용 → 현재 제품의 헤드라인/서브카피로 교체
-- 색상 → 현재 제품 패키지 색상 기반으로 변경
-- 로고/브랜드 → 현재 제품 브랜드로 교체
-
-★ 레퍼런스의 "디자인 뼈대"는 유지하고, "내용물"만 현재 제품으로 교체하는 것이 목표입니다.` });
-        for (const img of repImages) {
-          const compressed = await compressImageForAPI(img);
-          parts.push({
-            inlineData: {
-              mimeType: 'image/jpeg',
-              data: safeExtractBase64(compressed),
-            },
-          });
-        }
-      }
-    }
-  }
+  // 레퍼런스 이미지는 이미 parts 맨 앞에 1장 첨부됨 (refImageAttached)
 
   // ===== Gemini API 호출 (공통) =====
   // 비율 결정: auto면 레퍼런스 비율 + 정보량 기반, 수동이면 그대로
