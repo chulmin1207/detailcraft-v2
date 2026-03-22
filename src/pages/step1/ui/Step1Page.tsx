@@ -108,6 +108,9 @@ export function Step1Page() {
       const importedTypes = SECTION_ORDER.filter(
         (k) => sectionRefFolders[k]?.images?.length > 0
       );
+      console.log('[Step1] sectionRefFolders keys:', Object.keys(sectionRefFolders));
+      console.log('[Step1] sectionRefFolders 각 타입 이미지 수:', Object.entries(sectionRefFolders).map(([k, v]) => `${k}:${(v as {images?: unknown[]})?.images?.length ?? 0}`).join(', '));
+      console.log('[Step1] importedTypes:', importedTypes);
       const hasAnalyzedRefs = importedTypes.some(
         (k) => (sectionRefFolders[k]?.imageDescriptions?.length ?? 0) > 0
       );

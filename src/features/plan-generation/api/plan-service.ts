@@ -232,12 +232,12 @@ D. 초콜릿/소스/치즈 등 풍미/질감이 핵심인 제품 → 씨즐컷(s
 - [FAQ(faq)]: 가격 앵커링이나 CS 질문이 필요한 경우 → CTA 직전에 배치
 - [제품 정보(spec)]: 법적 필수 고지사항 → 항상 마지막에 배치
 
-${importedSectionTypes && importedSectionTypes.length > 0
+${importedSectionTypes && importedSectionTypes.length >= 8
 ? `★ 레퍼런스 기반 배치 순서 (위의 "레퍼런스 기반 섹션 구성"을 따르세요) ★
 총 섹션 수: 정확히 ${importedSectionTypes.length}개 (레퍼런스 폴더 수에 맞춤)`
 : `★ 검증된 배치 순서 ★
 hero → empathy → comparison → point(2~3개) → [impact-typo] → lifestyle → [situation] → review → [faq] → cta
-
+${importedSectionTypes && importedSectionTypes.length > 0 ? `\n★ 레퍼런스 폴더가 ${importedSectionTypes.length}개 있습니다. 이 섹션 타입(${importedSectionTypes.join(', ')})을 반드시 포함하되, 나머지는 위 배치 순서에서 추가하여 총 8개 이상으로 구성하세요.` : ''}
 총 섹션 수: 정확히 8개 이상 생성하세요. 8개 미만은 절대 불가합니다.
 ★★★ 반드시 8개 이상의 [SECTION_START]...[SECTION_END] 블록을 출력하세요 ★★★`}
 각 섹션 = 1장의 AI 생성 이미지.
@@ -344,12 +344,12 @@ F. 저항전복형: 부정적 선입견을 먼저 언급하고 뒤집기 (예: "
 각 섹션은 AI 이미지 생성으로 1장의 긴 세로 이미지로 만들어집니다.
 "컷"은 이미지 안에서의 영역/구성을 의미합니다 (별도 이미지가 아님).
 
-${importedSectionTypes && importedSectionTypes.length > 0
+${importedSectionTypes && importedSectionTypes.length >= 8
 ? `★★★ 레퍼런스 기반 섹션 구조 (필수) ★★★
 위 "레퍼런스 기반 섹션 구성"에 명시된 ${importedSectionTypes.length}개 섹션을 순서대로 생성하세요.`
 : `★★★ 기본 설득 구조 (검증된 흐름) ★★★
 히어로 → 공감 → 비교 → POINT(2~3개) → [임팩트 타이포] → 라이프스타일 → [상황 연출] → 리뷰 → CTA
-[ ] = 선택적 섹션. 총 8~12개 섹션.`}
+[ ] = 선택적 섹션. 총 8개 이상 섹션. 8개 미만 절대 불가.`}
 
 ### [hero] 히어로 (필수, 1장)
 - 제품의 핵심 USP + 패키지 비주얼이 통합된 첫인상 이미지
