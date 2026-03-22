@@ -109,7 +109,7 @@ export function Step1Page() {
         (k) => sectionRefFolders[k]?.images?.length > 0
       );
       const hasAnalyzedRefs = importedTypes.some(
-        (k) => sectionRefFolders[k]?.imageDescriptions?.length > 0
+        (k) => (sectionRefFolders[k]?.imageDescriptions?.length ?? 0) > 0
       );
 
       await animateProgress(35);

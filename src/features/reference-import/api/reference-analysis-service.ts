@@ -179,7 +179,7 @@ async function analyzeReferenceBatch(
     if (parsed && typeof parsed === 'object' && 'images' in (parsed as Record<string, unknown>)) {
       const images = (parsed as { images?: unknown[] }).images;
       if (Array.isArray(images)) {
-        descriptions = images.map((img: { summary?: string }) => img.summary || '설명 없음');
+        descriptions = (images as Array<{ summary?: string }>).map((img) => img.summary || '설명 없음');
       }
     }
     if (descriptions.length === 0) {
@@ -188,7 +188,7 @@ async function analyzeReferenceBatch(
       if (fallbackParsed && typeof fallbackParsed === 'object' && 'images' in (fallbackParsed as Record<string, unknown>)) {
         const images = (fallbackParsed as { images?: unknown[] }).images;
         if (Array.isArray(images)) {
-          descriptions = images.map((img: { summary?: string }) => img.summary || '설명 없음');
+          descriptions = (images as Array<{ summary?: string }>).map((img) => img.summary || '설명 없음');
         }
       }
     }
@@ -198,7 +198,7 @@ async function analyzeReferenceBatch(
     if (fallbackParsed && typeof fallbackParsed === 'object' && 'images' in (fallbackParsed as Record<string, unknown>)) {
       const images = (fallbackParsed as { images?: unknown[] }).images;
       if (Array.isArray(images)) {
-        descriptions = images.map((img: { summary?: string }) => img.summary || '설명 없음');
+        descriptions = (images as Array<{ summary?: string }>).map((img) => img.summary || '설명 없음');
       }
     }
     if (descriptions.length === 0) {
@@ -287,6 +287,7 @@ JSON만 출력하세요.`;
           colorMood: '분석 데이터 부족',
           compositionRules: '분석 데이터 부족',
           graphicElements: '분석 데이터 부족',
+          representativeRefIndices: [0, 0] as [number, number],
           sourceRefCount: totalRefCount,
         };
       }
@@ -308,13 +309,15 @@ JSON만 출력하세요.`;
         throw new Error(`디렉티브 JSON 파싱 실패 (${sectionType})`);
       }
 
+      const directive = parsed as Record<string, string>;
       return {
         sectionType,
-        layoutPatterns: parsed.layoutPatterns || '',
-        typographyStyle: parsed.typographyStyle || '',
-        colorMood: parsed.colorMood || '',
-        compositionRules: parsed.compositionRules || '',
-        graphicElements: parsed.graphicElements || '',
+        layoutPatterns: directive.layoutPatterns || '',
+        typographyStyle: directive.typographyStyle || '',
+        colorMood: directive.colorMood || '',
+        compositionRules: directive.compositionRules || '',
+        graphicElements: directive.graphicElements || '',
+        representativeRefIndices: (parsed as Record<string, unknown>).representativeRefIndices as [number, number] || [0, 0] as [number, number],
         sourceRefCount: totalRefCount,
       };
     } catch (err) {
