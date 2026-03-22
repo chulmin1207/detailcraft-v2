@@ -214,26 +214,26 @@ function buildDirectiveBlock(
   return `
 
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-★★★ 섹션 디자인 디렉티브 (${directive.sourceRefCount}장 레퍼런스 분석 기반) ★★★
-이 디렉티브는 실제 레퍼런스 이미지 분석 결과입니다. 반드시 따르세요.
+★★★ 디자인 방향 가이드 (${directive.sourceRefCount}장 레퍼런스 분석 기반) ★★★
+레퍼런스에서 추출한 디자인 방향입니다. 영감으로 활용하되 그대로 복사하지 마세요.
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
-[레이아웃 — 필수 적용] ${directive.layoutPatterns}
-→ 텍스트와 이미지의 배치, 여백, 그리드 구조를 이 패턴대로 구성하세요.
+[레이아웃 방향] ${directive.layoutPatterns}
+→ 이 구조를 참고하되, 현재 제품 정보량에 맞게 재구성하세요.
 
-[타이포그래피 — 필수 적용] ${directive.typographyStyle}
-→ 헤드라인/서브카피의 크기 계층, 강조 방식, 서체 스타일을 이대로 디자인하세요.
+[타이포그래피 톤] ${directive.typographyStyle}
+→ 이 스타일의 느낌을 참고하되, 현재 제품 브랜드에 맞게 변형하세요.
 
-[컬러 무드 — 참고] ${directive.colorMood}
-→ 전체 분위기/톤은 이 방향으로, 단 제품 색상은 실제 패키지 분석 결과 우선.
+[컬러 무드] ${directive.colorMood}
+→ 분위기/톤 방향 참고. 실제 색상은 제품 패키지에서 추출.
 
-[컴포지션 — 필수 적용] ${directive.compositionRules}
-→ 시선 흐름, 중심-주변 배치, 여백 활용을 이 규칙대로 구성하세요.
+[컴포지션 방향] ${directive.compositionRules}
+→ 시선 흐름과 구도를 참고하되, 현재 콘텐츠에 최적화하세요.
 
-[그래픽 요소 — 필수 적용] ${directive.graphicElements}
-→ 뱃지, 아이콘, 구분선, 장식 요소를 이 스타일로 제작하세요.
+[그래픽 요소 참고] ${directive.graphicElements}
+→ 비슷한 분위기의 그래픽 요소를 새롭게 디자인하세요.
 
-⚠️ 위 디렉티브 + 첨부된 레퍼런스 이미지를 동시에 참고하여, 레퍼런스 수준의 완성도를 달성하세요.`;
+★ 핵심: 레퍼런스의 "완성도와 분위기"를 목표로 하되, 현재 제품만의 독자적인 디자인을 만드세요.`;
 }
 
 // imageAnalysis에서 제품 외형 + 색상 제약 블록 생성
@@ -1494,9 +1494,11 @@ ${step3Prompt}`;
   }
 
   // ===== 섹션별 매칭된 레퍼런스 이미지 첨부 (제품 매칭 기반 > 분석 기반 fallback) =====
+  console.log(`[RefDebug] 섹션 ${section.number} "${section.name}": sectionType="${section.sectionType}", directives keys=${sectionDirectives ? Object.keys(sectionDirectives).join(',') : 'null'}, folders keys=${sectionRefFolders ? Object.keys(sectionRefFolders).join(',') : 'null'}`);
   if (section.sectionType && sectionDirectives && sectionRefFolders) {
     const directive = sectionDirectives[section.sectionType];
     const folder = sectionRefFolders[section.sectionType];
+    console.log(`[RefDebug] 섹션 ${section.number}: directive=${!!directive}, folder=${!!folder}, folder.images=${folder?.images?.length ?? 0}, matchedIndices=${folder?.matchedIndices?.join(',') ?? 'none'}`);
     if (directive && folder && folder.images.length > 0) {
       // 매칭된 인덱스 우선, 없으면 분석 시 선정된 대표 인덱스 사용
       const selectedIndices = folder.matchedIndices && folder.matchedIndices.length > 0
@@ -1512,12 +1514,17 @@ ${step3Prompt}`;
 
       if (repImages.length > 0) {
         parts.push({ text: `★★★ 섹션 레퍼런스 이미지 (${directive.sourceRefCount}장 중 ${matchSource} ${repImages.length}장 선정) ★★★
-이 레퍼런스 이미지들은 최종 디자인의 핵심 기준입니다. 반드시 다음을 추출하여 적용하세요:
-1. 레이아웃 구조: 텍스트-이미지 배치, 여백, 그리드 구성을 최대한 유사하게 따라하세요
-2. 타이포그래피 스타일: 글자 크기 계층, 강조 방식, 서체 느낌을 모방하세요
-3. 그래픽 요소: 뱃지, 아이콘, 구분선, 장식 패턴을 참고하여 유사한 스타일로 제작하세요
-4. 구도와 시선 흐름: 정보 배치 순서와 시각적 계층을 따라하세요
-⚠️ 색상만 제품 패키지에서 추출하고, 나머지 디자인 스타일은 레퍼런스를 최대한 충실히 참고하세요` });
+이 레퍼런스 이미지의 디자인 스타일을 "참고"하되, 현재 제품에 맞게 재해석하세요.
+레퍼런스를 그대로 복사하지 마세요. 레퍼런스에서 영감을 받아 새로운 디자인을 만드세요.
+
+참고할 요소:
+1. 레이아웃 방향성: 텍스트-이미지 배치 구조와 여백 활용 방식을 참고하되, 현재 제품 정보에 맞게 재구성
+2. 타이포그래피 톤: 서체 스타일과 크기 계층의 느낌을 참고하되, 현재 제품 브랜드에 어울리게 변형
+3. 그래픽 스타일: 뱃지, 아이콘, 장식 요소의 분위기를 참고하되, 현재 제품 컨셉에 맞는 새로운 요소로 대체
+4. 전체 분위기: 레퍼런스의 고급감/캐주얼감/깔끔함 등 무드를 참고
+
+⚠️ 색상은 반드시 현재 제품 패키지에서 추출
+⚠️ 레퍼런스의 제품/텍스트/로고를 그대로 가져오지 말 것 — 현재 제품 정보로 완전히 새로 구성` });
         for (const img of repImages) {
           const compressed = await compressImageForAPI(img);
           parts.push({

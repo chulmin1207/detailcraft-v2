@@ -238,7 +238,8 @@ ${importedSectionTypes && importedSectionTypes.length > 0
 : `★ 검증된 배치 순서 ★
 hero → empathy → comparison → point(2~3개) → [impact-typo] → lifestyle → [situation] → review → [faq] → cta
 
-총 섹션 수: 최소 8개 ~ 최대 12개`}
+총 섹션 수: 정확히 8개 이상 생성하세요. 8개 미만은 절대 불가합니다.
+★★★ 반드시 8개 이상의 [SECTION_START]...[SECTION_END] 블록을 출력하세요 ★★★`}
 각 섹션 = 1장의 AI 생성 이미지.
 
 ### STEP 1: 핵심 셀링 포인트 도출
@@ -562,7 +563,7 @@ ${importedSectionTypes && importedSectionTypes.length > 0
 [SECTION_START]
 섹션번호: N
 섹션명: 실제 섹션 이름
-섹션유형: hero / empathy / comparison / point / impact-typo / sizzle / lifestyle / situation / review / faq / cta
+섹션유형: hero / empathy / comparison / point / impact-typo / sizzle / lifestyle / situation / review / faq / cta / flavor / closeup / product-cut / lineup / recipe / trust / spec / bundle
 목적: 이 섹션이 판매에 기여하는 방식
 헤드라인: (10~18자)
 헤드라인대안: 감각묘사 | 상황제시 | 질문형 | 대비반전 | 팩트기반
