@@ -287,7 +287,6 @@ JSON만 출력하세요.`;
           colorMood: '분석 데이터 부족',
           compositionRules: '분석 데이터 부족',
           graphicElements: '분석 데이터 부족',
-          representativeRefIndices: [0, 0] as [number, number],
           sourceRefCount: totalRefCount,
         };
       }
@@ -317,7 +316,6 @@ JSON만 출력하세요.`;
         colorMood: directive.colorMood || '',
         compositionRules: directive.compositionRules || '',
         graphicElements: directive.graphicElements || '',
-        representativeRefIndices: (parsed as Record<string, unknown>).representativeRefIndices as [number, number] || [0, 0] as [number, number],
         sourceRefCount: totalRefCount,
       };
     } catch (err) {
