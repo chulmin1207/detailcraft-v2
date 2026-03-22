@@ -1,0 +1,43 @@
+# Logs
+logs
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+lerna-debug.log*
+
+node_modules
+dist
+dist-ssr
+*.local
+
+# Editor directories and files
+.vscode/*
+!.vscode/extensions.json
+.idea
+.DS_Store
+*.suo
+*.ntvs*
+*.njsproj
+*.sln
+*.sw?
+.vercel
+.claude
+
+# Debug / test artifacts
+debug_*.png
+test_*.cjs
+test_*.js
+test_results_*.txt
+shots/
+text_overlay_output/
+
+# Standalone scripts (integrated into src/)
+generate_*.cjs
+pipeline_*.cjs
+run_*.cjs
+scrape_*.cjs
+*_poc.cjs
+gen_html.cjs
+classify_and_copy.cjs
