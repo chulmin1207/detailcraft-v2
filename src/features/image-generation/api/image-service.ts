@@ -1350,20 +1350,19 @@ ${step3Prompt}`;
       sectionRefFolders,
     });
 
-    // ===== 레퍼런스 이미지를 맨 앞에 배치 (최우선 참고) =====
+    // ===== 레퍼런스 기반 단순 프롬프트 모드 =====
     let refImageAttached = false;
     if (section.sectionType && sectionDirectives && sectionRefFolders) {
       const refDirective = sectionDirectives[section.sectionType];
       const refFolder = sectionRefFolders[section.sectionType];
       console.log(`[RefDebug] 섹션 ${section.number} "${section.name}": sectionType="${section.sectionType}", directive=${!!refDirective}, folder=${!!refFolder}, folder.images=${refFolder?.images?.length ?? 0}, matchedIndices=${refFolder?.matchedIndices?.join(',') ?? 'none'}`);
       if (refDirective && refFolder && refFolder.images.length > 0) {
-        // 제품 매칭 1위 이미지 1장만 선택
         const bestIdx = refFolder.matchedIndices && refFolder.matchedIndices.length > 0
           ? refFolder.matchedIndices[0]
           : refDirective.representativeRefIndices[0];
         const bestImage = refFolder.images[bestIdx];
         if (bestImage) {
-          parts.push({ text: `[레퍼런스 디자인] 아래 이미지의 디자인 구조(레이아웃, 타이포그래피, 구도, 그래픽 요소)를 기반으로 현재 제품 버전을 만드세요. 디자인 뼈대는 유지하고, 제품/텍스트/색상만 현재 제품으로 교체하세요.` });
+          // 레퍼런스 이미지 첨부
           const compressed = await compressImageForAPI(bestImage);
           parts.push({
             inlineData: {
@@ -1376,9 +1375,45 @@ ${step3Prompt}`;
       }
     }
 
-    parts.push({ text: prompt });
+    if (refImageAttached) {
+      // ===== 레퍼런스 있을 때: Google AI Studio 스타일 단순 프롬프트 =====
+      const simplePrompt = `위 이미지는 한국 이커머스 상세페이지 레퍼런스 디자인입니다.
+이 레퍼런스의 디자인 구조(레이아웃, 타이포그래피 스타일, 구도, 그래픽 요소 배치)를 기반으로,
+아래 제품의 상세페이지 섹션 이미지를 만들어주세요.
 
-    if (designBrief) {
+제품명: ${productName}
+헤드라인: ${headline}
+서브카피: ${subCopy}
+${userVisualPrompt ? `추가 지시: ${userVisualPrompt}` : ''}
+
+규칙:
+- 레퍼런스의 레이아웃/구도/타이포 스타일을 따르되, 너무 똑같지 않게 적절히 변형
+- 제품 이미지와 텍스트는 현재 제품(${productName})으로 완전히 교체
+- 색상은 첨부된 제품 패키지 색상 기반으로 변경
+- 한국어 텍스트를 이미지에 직접 렌더링
+- 사람 얼굴 금지 (손/팔까지만 허용)
+- 가짜 인증마크, 허위 수치 생성 금지
+- 모바일에서 읽을 수 있는 큰 글씨`;
+
+      parts.push({ text: simplePrompt });
+
+      // 제품/패키지 이미지 단순 첨부 (레퍼런스 모드)
+      if (uploadedImages.product.length > 0) {
+        parts.push({ text: '[제품 실물 이미지]' });
+        const compressed = await compressImageForAPI(uploadedImages.product[0]);
+        parts.push({ inlineData: { mimeType: 'image/jpeg', data: safeExtractBase64(compressed) } });
+      }
+      if (uploadedImages.package.length > 0) {
+        parts.push({ text: '[패키지 이미지 — 이 색상과 디자인을 반영하세요]' });
+        const compressed = await compressImageForAPI(uploadedImages.package[0]);
+        parts.push({ inlineData: { mimeType: 'image/jpeg', data: safeExtractBase64(compressed) } });
+      }
+    } else {
+      // ===== 레퍼런스 없을 때: 기존 상세 프롬프트 =====
+      parts.push({ text: prompt });
+    }
+
+    if (!refImageAttached && designBrief) {
       // ===== DesignBrief 모드: visualMode에 따라 제품 이미지 포함 여부 결정 =====
       const strategy = designBrief.sectionStrategies.find(
         (s) => s.sectionNumber === section.number
@@ -1460,7 +1495,7 @@ ${step3Prompt}`;
         }
       }
       // infographic, emotional, social-proof → 제품 이미지 미포함
-    } else {
+    } else if (!refImageAttached) {
       // ===== 기존 모드: 섹션 번호 기반으로 제품 이미지 포함 여부 결정 =====
       const includeProduct = shouldIncludeProductImagesFallback(section);
 

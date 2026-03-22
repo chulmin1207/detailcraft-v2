@@ -73,7 +73,7 @@ ${productColorInfo ? `- ${productColorInfo}` : ''}- 시각적 USP: ${(imageAnaly
 - 제품 특징: ${d.productFeatures || '(제공되지 않음 - 제품명과 카테고리 정보만으로 작성하되, 구체적 성분/수치/특성을 절대 추측하거나 날조하지 마세요)'}
 - 추가 요청: ${d.additionalNotes || '없음'}
 ${imageAnalysisSection}
-${importedSectionTypes && importedSectionTypes.length > 0 ? `
+${importedSectionTypes && importedSectionTypes.length >= 8 ? `
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 ## 레퍼런스 기반 섹션 구성 (필수 준수)
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
@@ -85,6 +85,13 @@ ${importedSectionTypes && importedSectionTypes.length > 0 ? `
 ${importedSectionTypes.map((type, i) => `${i + 1}. [${type}] ${SECTION_TYPE_LABELS[type] || type}`).join('\n')}
 
 ★ 위 순서와 섹션 타입을 정확히 따르세요. 섹션을 추가하거나 빠뜨리지 마세요.
+` : importedSectionTypes && importedSectionTypes.length > 0 ? `
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+## 레퍼런스 참고 섹션
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+레퍼런스 폴더에서 다음 섹션 타입이 임포트되었습니다: ${importedSectionTypes.join(', ')}
+이 타입들을 반드시 포함하되, 총 8개 이상의 섹션을 생성하세요.
 ` : ''}
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 ## 절대 금지 규칙 (최우선 준수)
