@@ -832,7 +832,7 @@ export async function callClaudeForPlan(
 
   const requestBody = {
     model: 'claude-opus-4-6',
-    max_tokens: 64000,
+    max_tokens: 100000,
     thinking: {
       type: 'enabled',
       budget_tokens: 10000,
