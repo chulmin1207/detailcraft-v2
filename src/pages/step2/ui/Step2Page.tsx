@@ -374,6 +374,18 @@ export function Step2Page() {
                 <img src={generatedImages[editingIndex].data} alt="원본" className="w-full max-h-[50vh] object-contain" />
               </div>
 
+              {/* 생성 프롬프트 보기 */}
+              {generatedImages[editingIndex].prompt && (
+                <details className="mb-4">
+                  <summary className="text-xs text-text-tertiary cursor-pointer hover:text-text-secondary transition-colors">
+                    생성에 사용된 프롬프트 보기
+                  </summary>
+                  <pre className="mt-2 p-3 bg-bg-primary border border-border-subtle rounded-lg text-xs text-text-secondary whitespace-pre-wrap max-h-40 overflow-y-auto">
+                    {generatedImages[editingIndex].prompt}
+                  </pre>
+                </details>
+              )}
+
               <textarea
                 value={editPrompt}
                 onChange={(e) => setEditPrompt(e.target.value)}
