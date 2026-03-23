@@ -190,12 +190,13 @@ export function Step2Page() {
   const imageEntries = Object.keys(generatedImages).length;
   const successCount = Object.values(generatedImages).filter((img) => img.data && !img.error).length;
   const totalSections = selectedTrack === 'plan' ? (generatedSections.length || FIXED_SECTIONS.length) : FIXED_SECTIONS.length;
-  const hasResults = imageEntries > 0 || (selectedTrack !== null && !isGenerating);
+  const hasResults = imageEntries > 0;
+  const showTrackSelection = !isGenerating && !hasResults && !error;
 
   return (
     <section className="max-w-5xl mx-auto">
       {/* 트랙 선택 (생성 시작 전) */}
-      {!isGenerating && !hasResults && !error && (
+      {showTrackSelection && (
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
           <button
             onClick={() => handleStartGeneration('plan')}
