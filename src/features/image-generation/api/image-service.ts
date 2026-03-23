@@ -162,9 +162,9 @@ export async function generateSectionImage(
 
   parts.push({ text: prompt });
 
-  // 제품 이미지
+  // 제품 이미지 (Vercel 4.5MB 제한 대응: 800px, 0.5 quality)
   if (productImage) {
-    const compressed = await compressImageForAPI(productImage);
+    const compressed = await compressImageForAPI(productImage, 800, 0.5);
     parts.push({
       inlineData: { mimeType: 'image/jpeg', data: safeExtractBase64(compressed) },
     });
@@ -175,7 +175,7 @@ export async function generateSectionImage(
 
   // 레퍼런스 이미지
   if (referenceImage) {
-    const compressed = await compressImageForAPI(referenceImage);
+    const compressed = await compressImageForAPI(referenceImage, 800, 0.5);
     parts.push({
       inlineData: { mimeType: 'image/jpeg', data: safeExtractBase64(compressed) },
     });
