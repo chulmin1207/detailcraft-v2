@@ -14,8 +14,8 @@ export const MODEL_CONFIG: ModelConfig = {
   name: '이미지 생성',
   model: 'gemini-3.1-flash-image-preview',
   timeout: 180000,
-  config: { imageConfig: { imageSize: '2K' } },
-  description: '2K 해상도',
+  config: { imageConfig: { imageSize: '4K' } },
+  description: '4K 해상도',
 };
 
 // ===== SECTION TYPE LABELS =====
