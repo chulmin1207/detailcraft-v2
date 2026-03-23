@@ -9,10 +9,9 @@ import {
   parseSections,
 } from '@/features/plan-generation';
 import { BACKEND_URL } from '@/shared/config/constants';
-import type { Category, SectionType } from '@/shared/types';
+import type { Category } from '@/shared/types';
 import { ProductForm } from './ProductForm';
 import { ProductImageUpload } from './ProductImageUpload';
-import { FolderImportZone, matchReferencesToProduct } from '@/features/reference-import';
 
 /**
  * STEP 1 페이지 컴포넌트
@@ -31,7 +30,7 @@ export function Step1Page() {
     goToStep,
   } = useProductStore();
 
-  const { uploadedImages, useBackend, claudeApiKey, geminiApiKey, sectionRefFolders, setSectionRefFolders } = useImageStore();
+  const { uploadedImages, useBackend, claudeApiKey, geminiApiKey } = useImageStore();
   const showToast = useToastStore((s) => s.showToast);
 
   const isMountedRef = useRef(true);
@@ -97,78 +96,11 @@ export function Step1Page() {
         await animateProgress(30);
       }
 
-      // 3. 제품-레퍼런스 매칭 (분석된 레퍼런스가 있을 때)
-      // 섹션 타입 순서 정의 (상세페이지 흐름 기준)
-      const SECTION_ORDER: SectionType[] = [
-        'hero', 'point', 'flavor', 'closeup',
-        'lifestyle', 'product-cut', 'sizzle', 'lineup',
-        'empathy', 'cta', 'recipe', 'trust', 'spec',
-        'bundle', 'divider', 'situation', 'review', 'faq',
-      ];
-      const importedTypes = SECTION_ORDER.filter(
-        (k) => sectionRefFolders[k]?.images?.length > 0
-      );
-      console.log('[Step1] sectionRefFolders keys:', Object.keys(sectionRefFolders));
-      console.log('[Step1] sectionRefFolders 각 타입 이미지 수:', Object.entries(sectionRefFolders).map(([k, v]) => `${k}:${(v as {images?: unknown[]})?.images?.length ?? 0}`).join(', '));
-      console.log('[Step1] importedTypes:', importedTypes);
-      const hasAnalyzedRefs = importedTypes.some(
-        (k) => (sectionRefFolders[k]?.imageDescriptions?.length ?? 0) > 0
-      );
-
-      await animateProgress(35);
-
-      if (hasAnalyzedRefs && geminiApiKey) {
-        try {
-          const imageAnalysisSummary = imageAnalysis
-            ? [
-                imageAnalysis.productAppearance,
-                imageAnalysis.packageDesign,
-                imageAnalysis.moodAndTone,
-                imageAnalysis.packageType ? `패키지: ${imageAnalysis.packageType}` : '',
-                (imageAnalysis.packageColors || []).length > 0 ? `패키지 색상: ${imageAnalysis.packageColors?.join(', ')}` : '',
-                (imageAnalysis.productColors || []).length > 0 ? `원물 색상: ${imageAnalysis.productColors?.join(', ')}` : '',
-              ].filter(Boolean).join('. ')
-            : '이미지 분석 없음';
-
-          const matched = await matchReferencesToProduct(
-            sectionRefFolders,
-            {
-              productName: data.productName,
-              category: data.category,
-              productFeatures: data.productFeatures || '',
-              targetAudience: data.targetAudience,
-              imageAnalysisSummary,
-            },
-            { useBackend, backendUrl: BACKEND_URL, geminiApiKey },
-          );
-
-          // 매칭 결과를 폴더에 저장
-          setSectionRefFolders((prev) => {
-            const updated = { ...prev };
-            for (const [sectionType, indices] of Object.entries(matched)) {
-              if (updated[sectionType]) {
-                updated[sectionType] = { ...updated[sectionType], matchedIndices: indices };
-              }
-            }
-            return updated;
-          });
-
-        } catch (err) {
-          console.warn('[Step1] 레퍼런스 매칭 실패, 기본값 사용:', err);
-        }
-      }
-
-      await animateProgress(45);
-
-      // 4. 프롬프트 빌드 (레퍼런스 폴더 섹션 타입 반영)
-      const prompt = buildPlanPrompt(
-        data,
-        imageAnalysis,
-        importedTypes.length > 0 ? importedTypes : null
-      );
+      // 3. 프롬프트 빌드
+      const prompt = buildPlanPrompt(data, imageAnalysis);
       await animateProgress(50);
 
-      // 5. Claude API 호출 (기획서 생성)
+      // 4. Claude API 호출 (기획서 생성)
       const planConfig = {
         useBackend,
         backendUrl: BACKEND_URL,
@@ -179,12 +111,12 @@ export function Step1Page() {
 
       await animateProgress(90);
 
-      // 6. 섹션 파싱
+      // 5. 섹션 파싱
       const sections = parseSections(response);
 
       await animateProgress(95);
 
-      // 6-1. 생성 후 기본 검증
+      // 5-1. 생성 후 기본 검증
       const BANNED_WORDS = ['진짜', '완벽한', '완벽', '혁신적', '게임체인저', '놓치지 마세요', '서두르세요', '지금 바로 구매'];
       const warnings: string[] = [];
 
@@ -203,13 +135,13 @@ export function Step1Page() {
 
       await animateProgress(100);
 
-      // 7. 상태 업데이트
+      // 6. 상태 업데이트
       setGeneratedPlan(response);
       setGeneratedSections(sections);
 
       showToast('기획서 생성 완료!', 'success');
 
-      // 7. Step 2로 이동
+      // Step 2로 이동
       setTimeout(() => {
         if (isMountedRef.current) goToStep(2);
       }, 500);
@@ -227,7 +159,6 @@ export function Step1Page() {
     productFeatures, additionalNotes, uploadedImages,
     useBackend, claudeApiKey, geminiApiKey, animateProgress, showToast,
     setGeneratedPlan, setGeneratedSections, goToStep,
-    sectionRefFolders, setSectionRefFolders,
   ]);
 
   return (
@@ -237,9 +168,6 @@ export function Step1Page() {
 
       {/* 제품 이미지 업로드 카드 */}
       <ProductImageUpload />
-
-      {/* 섹션별 레퍼런스 임포트 */}
-      <FolderImportZone />
 
       {/* 생성 버튼 */}
       <div className="text-center mt-6">

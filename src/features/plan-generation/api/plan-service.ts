@@ -80,7 +80,7 @@ ${importedSectionTypes && importedSectionTypes.length >= 8 ? `
 
 사용자가 ${importedSectionTypes.length}개의 레퍼런스 폴더를 임포트했습니다.
 아래 섹션 타입 순서대로 정확히 ${importedSectionTypes.length}개 섹션을 생성하세요.
-기존의 "8~12개" 제한을 무시하고, 아래 목록을 그대로 따르세요.
+기존의 "15개" 제한을 무시하고, 아래 목록을 그대로 따르세요.
 
 ${importedSectionTypes.map((type, i) => `${i + 1}. [${type}] ${SECTION_TYPE_LABELS[type] || type}`).join('\n')}
 
@@ -91,7 +91,7 @@ ${importedSectionTypes.map((type, i) => `${i + 1}. [${type}] ${SECTION_TYPE_LABE
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
 레퍼런스 폴더에서 다음 섹션 타입이 임포트되었습니다: ${importedSectionTypes.join(', ')}
-이 타입들을 반드시 포함하되, 총 8개 이상의 섹션을 생성하세요.
+이 타입들을 반드시 포함하되, 총 15개의 섹션을 생성하세요.
 ` : ''}
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 ## 절대 금지 규칙 (최우선 준수)
@@ -240,18 +240,16 @@ ${importedSectionTypes && importedSectionTypes.length >= 8
 ? `★ 레퍼런스 기반 배치 순서 (위의 "레퍼런스 기반 섹션 구성"을 따르세요) ★
 총 섹션 수: 정확히 ${importedSectionTypes.length}개 (레퍼런스 폴더 수에 맞춤)`
 : `★ 검증된 배치 순서 ★
-hero → empathy → point(2~3개) → lifestyle → [situation] → review → [faq] → cta
-${importedSectionTypes && importedSectionTypes.length > 0 ? `\n★ 레퍼런스 폴더가 ${importedSectionTypes.length}개 있습니다. 이 섹션 타입(${importedSectionTypes.join(', ')})을 반드시 포함하되, 나머지는 위 배치 순서에서 추가하여 총 8개 이상으로 구성하세요.` : ''}
-총 섹션 수: 정확히 8개 이상 생성하세요. 8개 미만은 절대 불가합니다.
-★★★ 반드시 8개 이상의 [SECTION_START]...[SECTION_END] 블록을 출력하세요 ★★★`}
+hero → empathy → point(3개) → sizzle → trust → divider → lifestyle → situation → recipe → review → faq → cta → spec = 정확히 15개
+${importedSectionTypes && importedSectionTypes.length > 0 ? `\n★ 레퍼런스 폴더가 ${importedSectionTypes.length}개 있습니다. 이 섹션 타입(${importedSectionTypes.join(', ')})을 반드시 포함하되, 나머지는 위 배치 순서에서 추가하여 총 15개로 구성하세요.` : ''}
+총 섹션 수: 정확히 15개를 생성하세요. 15개 미만은 절대 불가합니다.
+★★★ 반드시 15개의 [SECTION_START]...[SECTION_END] 블록을 출력하세요 ★★★`}
 각 섹션 = 1장의 AI 생성 이미지.
 
 ### STEP 1: 핵심 셀링 포인트 도출
 
-★ POINT 수는 제품 복잡도에 따라 ★
-- 단순 제품 (보리차, 생수, 티슈 등): 2개 POINT
-- 일반 제품 (과자, 음료, 간식 등): 3개 POINT
-- 복합 제품 (건강식품, 화장품, 가전 등): 4개 POINT
+★ POINT 수는 항상 3개 ★
+- 모든 제품: 3개 POINT (총 15개 섹션 구성에 맞춤)
 
 ★ POINT가 될 수 없는 것들 ★
 - 편의성, 휴대성, 용량, 포장, 크기 → 사용 시나리오 섹션이나 FAQ에서 처리
@@ -352,8 +350,8 @@ ${importedSectionTypes && importedSectionTypes.length >= 8
 ? `★★★ 레퍼런스 기반 섹션 구조 (필수) ★★★
 위 "레퍼런스 기반 섹션 구성"에 명시된 ${importedSectionTypes.length}개 섹션을 순서대로 생성하세요.`
 : `★★★ 기본 설득 구조 (검증된 흐름) ★★★
-히어로 → 공감 → 비교 → POINT(2~3개) → [임팩트 타이포] → 라이프스타일 → [상황 연출] → 리뷰 → CTA
-[ ] = 선택적 섹션. 총 8개 이상 섹션. 8개 미만 절대 불가.`}
+히어로 → 공감 → POINT(3개) → 임팩트 타이포 → 신뢰 → 구분선 → 라이프스타일 → 상황 연출 → 레시피 → 리뷰 → FAQ → CTA → 스펙 = 정확히 15개
+총 15개 섹션. 15개 미만 절대 불가.`}
 
 ### [hero] 히어로 (필수, 1장)
 - 제품의 핵심 USP + 패키지 비주얼이 통합된 첫인상 이미지

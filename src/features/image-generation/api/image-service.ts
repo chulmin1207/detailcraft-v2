@@ -874,17 +874,6 @@ ${additionalNotes}`;
   return prompt;
 }
 
-// visualMode별 제품 이미지 포함 여부 — 모든 섹션에서 제품 이미지 활용
-function shouldIncludeProductImages(_mode: VisualMode): boolean {
-  // 모든 모드에서 제품 이미지를 포함 (제품 일관성 유지)
-  return true;
-}
-
-// designBrief 없을 때 제품 이미지 포함 여부 — 모든 섹션에서 포함
-function shouldIncludeProductImagesFallback(_section: Section): boolean {
-  return true;
-}
-
 // visualMode별 프롬프트 가이드
 function getVisualModeGuide(mode: VisualMode): string {
   switch (mode) {
@@ -1134,18 +1123,12 @@ export async function generateSectionImage(
     geminiApiKey,
     selectedAspectRatio,
     productName,
-    category,
     productFeatures,
     additionalNotes,
-    generatedSections,
     refStrength,
     headline,
     subCopy,
     userVisualPrompt,
-    targetAudience,
-    designBrief,
-    imageAnalysis,
-    sectionDirectives,
     sectionRefFolders,
   } = params;
 
@@ -1295,40 +1278,92 @@ ${step3Prompt}`;
       });
     }
   } else {
-    // ===== 기본 모드 (STEP 2 / 일반 생성) =====
-    prompt = buildImagePrompt(section, index, {
-      productName,
-      category,
-      productFeatures,
-      additionalNotes,
-      uploadedImages,
-      sectionReferences,
-      refStrength,
-      generatedSections,
-      selectedAspectRatio,
-      headline,
-      subCopy,
-      userVisualPrompt,
-      targetAudience,
-      designBrief,
-      imageAnalysis,
-      sectionDirectives,
-      sectionRefFolders,
-    });
+    // ===== STEP 2: 테스트 검증된 심플 구조 (2026-03-23 확정) =====
+    // 구조: 시스템 프롬프트 + 제품 이미지 + 라벨 + 레퍼런스 이미지 + 라벨
 
-    // ===== 레퍼런스 기반 단순 프롬프트 모드 =====
-    let refImageAttached = false;
-    if (section.sectionType && sectionDirectives && sectionRefFolders) {
-      const refDirective = sectionDirectives[section.sectionType];
+    const hl = headline || section.headline || '';
+    const sc = subCopy || section.subCopy || '';
+    const vp = userVisualPrompt || section.visualPrompt || '';
+    const sectionLayout = getSectionLayout(section);
+
+    // 1) 시스템 프롬프트 + 섹션별 지시
+    prompt = `당신은 한국 이커머스 상세페이지 디자인 전문가입니다.
+
+[절대 규칙]
+1. 반드시 한국어 텍스트를 정확하게 렌더링하세요
+2. 레퍼런스 이미지가 있으면 그 디자인 톤, 색감, 타이포그래피 스타일을 기반으로 하되, 레이아웃을 변주하세요
+3. 제품 이미지의 패키지 디자인을 정확하게 반영하세요 — 색상, 형태, 텍스트 왜곡 없이
+4. 전체 상세페이지의 톤 & 무드를 일관되게 유지하세요
+5. 사람 얼굴 금지 — 손/팔까지만 허용
+6. 가짜 인증마크(HACCP, ISO 등), 허위 수치(만족도 %, 판매량) 생성 금지
+7. 섹션 라벨/메타 텍스트("섹션 유형: point" 등) 노출 금지
+
+이 이미지는 860px 너비의 이커머스 상세페이지 섹션입니다.
+
+[섹션 ${section.number} — ${section.name}]
+역할: ${sectionLayout.role}
+
+텍스트 내용:
+- 헤드라인: ${hl}
+- 서브카피: ${sc}
+
+레이아웃 가이드:
+${sectionLayout.layout}
+
+제품 배치:
+${sectionLayout.productPlacement}
+
+비주얼 지시:
+${vp}
+
+제품명: ${productName}
+제품 특징: ${productFeatures}`;
+
+    if (additionalNotes.trim()) {
+      prompt += `\n\n추가 요구사항:\n${additionalNotes}`;
+    }
+
+    parts.push({ text: prompt });
+
+    // 2) 제품 이미지 + 명확한 라벨
+    if (uploadedImages.product.length > 0) {
+      const compressed = await compressImageForAPI(uploadedImages.product[0]);
+      parts.push({
+        inlineData: {
+          mimeType: 'image/jpeg',
+          data: safeExtractBase64(compressed),
+        },
+      });
+      parts.push({
+        text: '위는 제품 이미지입니다. 이 제품의 패키지 디자인(색상, 형태, 로고, 텍스트)을 정확히 반영하세요. 절대로 다른 제품으로 바꾸거나 색상을 변경하지 마세요.',
+      });
+    }
+
+    // 3) 패키지 이미지 (있으면)
+    if (uploadedImages.package.length > 0) {
+      const compressed = await compressImageForAPI(uploadedImages.package[0]);
+      parts.push({
+        inlineData: {
+          mimeType: 'image/jpeg',
+          data: safeExtractBase64(compressed),
+        },
+      });
+      parts.push({
+        text: '위는 패키지 이미지입니다. 이 패키지의 색상과 디자인을 정확히 반영하세요.',
+      });
+    }
+
+    // 4) 레퍼런스 이미지 + 명확한 역할 구분
+    // 우선순위: 섹션별 레퍼런스 > 폴더 레퍼런스 > 글로벌 레퍼런스
+    let refAttached = false;
+
+    // 4-a) 섹션별 폴더 레퍼런스
+    if (!refAttached && section.sectionType && sectionRefFolders) {
       const refFolder = sectionRefFolders[section.sectionType];
-      console.log(`[RefDebug] 섹션 ${section.number} "${section.name}": sectionType="${section.sectionType}", directive=${!!refDirective}, folder=${!!refFolder}, folder.images=${refFolder?.images?.length ?? 0}, matchedIndices=${refFolder?.matchedIndices?.join(',') ?? 'none'}`);
-      if (refDirective && refFolder && refFolder.images.length > 0) {
-        const bestIdx = refFolder.matchedIndices && refFolder.matchedIndices.length > 0
-          ? refFolder.matchedIndices[0]
-          : refDirective.representativeRefIndices[0];
+      if (refFolder && refFolder.images.length > 0) {
+        const bestIdx = refFolder.matchedIndices?.[0] ?? 0;
         const bestImage = refFolder.images[bestIdx];
         if (bestImage) {
-          // 레퍼런스 이미지 첨부
           const compressed = await compressImageForAPI(bestImage);
           parts.push({
             inlineData: {
@@ -1336,178 +1371,46 @@ ${step3Prompt}`;
               data: safeExtractBase64(compressed),
             },
           });
-          refImageAttached = true;
+          parts.push({
+            text: '위는 레퍼런스 디자인입니다. 이 디자인의 톤, 색감, 스타일을 참고하되, 요청된 섹션에 맞게 레이아웃을 변주하세요. 내용과 제품은 위의 제품 이미지로 교체하세요.',
+          });
+          refAttached = true;
         }
       }
     }
 
-    if (refImageAttached) {
-      // ===== 레퍼런스 있을 때: Google AI Studio 스타일 단순 프롬프트 =====
-      console.log(`%c[RefMode] 섹션 ${section.number} — 레퍼런스 모드 활성! 단순 프롬프트 사용`, 'color: green; font-weight: bold');
-      const simplePrompt = `위 이미지는 레퍼런스 디자인입니다.
-이 레퍼런스를 참고하여 아래 제품의 상세페이지 섹션 이미지를 만들어주세요.
-레퍼런스의 디자인을 그대로 복사하지 말고, 적절하게 변형하여 새로운 디자인을 만드세요.
-
-제품명: ${productName}
-헤드라인: ${headline}
-서브카피: ${subCopy}
-
-- 색상은 첨부된 제품 패키지에서 추출
-- 한국어 텍스트를 이미지에 직접 렌더링
-- 사람 얼굴 금지
-- 가짜 인증마크/허위 수치 금지`;
-
-      parts.push({ text: simplePrompt });
-
-      // 제품/패키지 이미지 단순 첨부 (레퍼런스 모드)
-      if (uploadedImages.product.length > 0) {
-        parts.push({ text: '[제품 실물 이미지]' });
-        const compressed = await compressImageForAPI(uploadedImages.product[0]);
-        parts.push({ inlineData: { mimeType: 'image/jpeg', data: safeExtractBase64(compressed) } });
+    // 4-b) 섹션별 레퍼런스 (Step 2에서 개별 지정)
+    if (!refAttached) {
+      const sectionRefs = sectionReferences[index] || [];
+      if (sectionRefs.length > 0) {
+        const compressed = await compressImageForAPI(sectionRefs[0]);
+        parts.push({
+          inlineData: {
+            mimeType: 'image/jpeg',
+            data: safeExtractBase64(compressed),
+          },
+        });
+        parts.push({
+          text: '위는 레퍼런스 디자인입니다. 이 디자인의 톤, 색감, 스타일을 참고하되, 요청된 섹션에 맞게 레이아웃을 변주하세요.',
+        });
+        refAttached = true;
       }
-      if (uploadedImages.package.length > 0) {
-        parts.push({ text: '[패키지 이미지 — 이 색상과 디자인을 반영하세요]' });
-        const compressed = await compressImageForAPI(uploadedImages.package[0]);
-        parts.push({ inlineData: { mimeType: 'image/jpeg', data: safeExtractBase64(compressed) } });
-      }
-    } else {
-      // ===== 레퍼런스 없을 때: 기존 상세 프롬프트 =====
-      console.log(`%c[RefMode] 섹션 ${section.number} — 레퍼런스 없음! 기존 상세 프롬프트 사용`, 'color: red; font-weight: bold');
-      parts.push({ text: prompt });
     }
 
-    if (!refImageAttached && designBrief) {
-      // ===== DesignBrief 모드: visualMode에 따라 제품 이미지 포함 여부 결정 =====
-      const strategy = designBrief.sectionStrategies.find(
-        (s) => s.sectionNumber === section.number
-      ) || designBrief.sectionStrategies[index];
-
-      // visualMode가 undefined면 섹션 유형/번호 기반 기본값 사용
-      const DEFAULT_VISUAL_MODES_BY_TYPE: Record<string, VisualMode> = {
-        'hero': 'product-hero',
-        'empathy': 'emotional',
-        'point': 'product-detail',
-        'trust': 'infographic',
-        'sizzle': 'product-detail',
-        'divider': 'product-hero',
-        'lifestyle': 'lifestyle',
-        'situation': 'lifestyle',
-        'recipe': 'lifestyle',
-        'review': 'social-proof',
-        'faq': 'infographic',
-        'cta': 'product-hero',
-        'spec': 'infographic',
-        'bundle': 'product-hero',
-        'flavor': 'product-detail',
-        'closeup': 'product-detail',
-        'lineup': 'product-hero',
-        'product-cut': 'product-hero',
-      };
-      const DEFAULT_VISUAL_MODES_BY_NUM: Record<number, VisualMode> = {
-        1: 'product-hero',
-        2: 'emotional',
-        3: 'emotional',
-        4: 'product-detail',
-        5: 'infographic',
-        6: 'infographic',
-        7: 'product-hero',
-        8: 'lifestyle',
-        9: 'lifestyle',
-        10: 'lifestyle',
-        11: 'social-proof',
-        12: 'infographic',
-        13: 'product-hero',
-        14: 'infographic',
-      };
-      const visualMode = strategy?.visualMode
-        || (section.sectionType && DEFAULT_VISUAL_MODES_BY_TYPE[section.sectionType])
-        || DEFAULT_VISUAL_MODES_BY_NUM[section.number]
-        || 'product-hero';
-      const needsProductImages = shouldIncludeProductImages(visualMode);
-
-      if (needsProductImages) {
-        // 제품 이미지가 필요한 모드: product-hero, product-detail, lifestyle
-        const maxProduct = Math.min(uploadedImages.product.length, 2);
-        if (maxProduct > 0) {
-          parts.push({ text: '[원물/제품 실물 이미지 — 이 제품의 실제 외형, 색상, 질감을 정확히 재현하세요]' });
-        }
-        for (let i = 0; i < maxProduct; i++) {
-          const compressed = await compressImageForAPI(uploadedImages.product[i]);
-          parts.push({
-            inlineData: {
-              mimeType: 'image/jpeg',
-              data: safeExtractBase64(compressed),
-            },
-          });
-        }
-
-        const maxPackage = Math.min(uploadedImages.package.length, 2);
-        if (maxPackage > 0) {
-          parts.push({ text: '[패키지 이미지 — 이 패키지의 실제 색상과 디자인을 정확히 반영하세요. 패키지 색상을 변경하거나 다른 색으로 바꾸지 마세요]' });
-        }
-        for (let i = 0; i < maxPackage; i++) {
-          const compressed = await compressImageForAPI(uploadedImages.package[i]);
-          parts.push({
-            inlineData: {
-              mimeType: 'image/jpeg',
-              data: safeExtractBase64(compressed),
-            },
-          });
-        }
-      }
-      // infographic, emotional, social-proof → 제품 이미지 미포함
-    } else if (!refImageAttached) {
-      // ===== 기존 모드: 섹션 번호 기반으로 제품 이미지 포함 여부 결정 =====
-      const includeProduct = shouldIncludeProductImagesFallback(section);
-
-      if (includeProduct) {
-        if (uploadedImages.product.length > 0) {
-          parts.push({ text: '[원물/제품 실물 이미지 — 이 제품의 실제 외형, 색상, 질감을 정확히 재현하세요]' });
-          const compressed = await compressImageForAPI(uploadedImages.product[0]);
-          parts.push({
-            inlineData: {
-              mimeType: 'image/jpeg',
-              data: safeExtractBase64(compressed),
-            },
-          });
-        }
-
-        if (uploadedImages.package.length > 0) {
-          parts.push({ text: '[패키지 이미지 — 이 패키지의 실제 색상과 디자인을 정확히 반영하세요. 패키지 색상을 변경하거나 다른 색으로 바꾸지 마세요]' });
-          const compressed = await compressImageForAPI(uploadedImages.package[0]);
-          parts.push({
-            inlineData: {
-              mimeType: 'image/jpeg',
-              data: safeExtractBase64(compressed),
-            },
-          });
-        }
-      }
-      // 섹션 4(베네핏), 7(신뢰) → 제품 이미지 미포함
-
-      // 레퍼런스 이미지 (기존 방식: 최대 1장) — 이미 맨 앞에 첨부된 경우 스킵
-      if (!refImageAttached) {
-        const sectionRefs = sectionReferences[index] || [];
-        const refToUse =
-          sectionRefs.length > 0
-            ? sectionRefs[0]
-            : uploadedImages.references.length > 0
-              ? uploadedImages.references[0]
-              : null;
-        if (refToUse) {
-          const compressed = await compressImageForAPI(refToUse);
-          parts.push({
-            inlineData: {
-              mimeType: 'image/jpeg',
-              data: safeExtractBase64(compressed),
-            },
-          });
-        }
-      }
+    // 4-c) 글로벌 레퍼런스 (Step 1에서 업로드)
+    if (!refAttached && uploadedImages.references.length > 0) {
+      const compressed = await compressImageForAPI(uploadedImages.references[0]);
+      parts.push({
+        inlineData: {
+          mimeType: 'image/jpeg',
+          data: safeExtractBase64(compressed),
+        },
+      });
+      parts.push({
+        text: '위는 레퍼런스 디자인입니다. 이 디자인의 톤, 색감, 스타일을 참고하되, 요청된 섹션에 맞게 레이아웃을 변주하세요.',
+      });
     }
   }
-
-  // 레퍼런스 이미지는 이미 parts 맨 앞에 1장 첨부됨 (refImageAttached)
 
   // ===== Gemini API 호출 (공통) =====
   // 비율 결정: auto면 레퍼런스 비율 + 정보량 기반, 수동이면 그대로
