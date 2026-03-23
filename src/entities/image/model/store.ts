@@ -101,7 +101,7 @@ export const useImageStore = create<ImageState>()(
   // ===== API 키 =====
   claudeApiKey: (() => { try { return localStorage.getItem(LS_CLAUDE_KEY) || ''; } catch { return ''; } })(),
   geminiApiKey: (() => { try { return localStorage.getItem(LS_GEMINI_KEY) || ''; } catch { return ''; } })(),
-  useBackend: true,
+  useBackend: false,
   saveApiKeys: (claude, gemini) => {
     try {
       if (claude) localStorage.setItem(LS_CLAUDE_KEY, claude);
