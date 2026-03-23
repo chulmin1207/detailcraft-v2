@@ -85,20 +85,32 @@ export async function callClaudeForPlan(
     throw new Error(`Claude API 오류 (${response.status}): ${error}`);
   }
 
-  // SSE 스트림 응답 파싱
-  const text = await response.text();
-  const lines = text.split('\n');
-  let result = '';
+  // SSE 스트림을 ReadableStream으로 읽기
+  const reader = response.body?.getReader();
+  if (!reader) throw new Error('응답 스트림을 읽을 수 없습니다.');
 
-  for (const line of lines) {
-    if (line.startsWith('data: ')) {
-      try {
-        const data = JSON.parse(line.slice(6));
-        if (data.type === 'content_block_delta' && data.delta?.text) {
-          result += data.delta.text;
+  const decoder = new TextDecoder();
+  let result = '';
+  let buffer = '';
+
+  while (true) {
+    const { done, value } = await reader.read();
+    if (done) break;
+
+    buffer += decoder.decode(value, { stream: true });
+    const lines = buffer.split('\n');
+    buffer = lines.pop() || '';
+
+    for (const line of lines) {
+      if (line.startsWith('data: ')) {
+        try {
+          const data = JSON.parse(line.slice(6));
+          if (data.type === 'content_block_delta' && data.delta?.text) {
+            result += data.delta.text;
+          }
+        } catch {
+          // JSON 파싱 실패 무시
         }
-      } catch {
-        // JSON 파싱 실패 무시
       }
     }
   }

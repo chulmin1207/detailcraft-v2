@@ -26,8 +26,14 @@ export function Step2Page() {
 
     try {
       const prompt = buildPlanPrompt(productName, productFeatures);
+      console.log('[Track1] Claude 호출 시작...');
       const response = await callClaudeForPlan(prompt, { useBackend, backendUrl: BACKEND_URL });
+      console.log('[Track1] Claude 응답 길이:', response.length);
       const sections = parseSections(response);
+      console.log('[Track1] 파싱된 섹션:', sections.length);
+      if (sections.length === 0) {
+        throw new Error('기획서에서 섹션을 파싱하지 못했습니다. 다시 시도해주세요.');
+      }
       setGeneratedSections(sections);
       setGenerationProgress(5);
 
