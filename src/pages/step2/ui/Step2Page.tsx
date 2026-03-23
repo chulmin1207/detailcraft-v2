@@ -114,6 +114,51 @@ export function Step2Page() {
     else generateTrack2();
   };
 
+  // 이미지만 재생성 (기획 유지)
+  const retryImageGeneration = useCallback(() => {
+    setError(null);
+    setGeneratedImages({});
+    if (selectedTrack === 'plan' && generatedSections.length > 0) {
+      // Track 1: 기존 기획 데이터로 이미지만 다시 생성
+      setIsGenerating(true);
+      setGenerationProgress(0);
+      (async () => {
+        try {
+          for (let i = 0; i < generatedSections.length; i++) {
+            try {
+              const result = await generateSectionImage({
+                section: generatedSections[i],
+                index: i,
+                totalSections: generatedSections.length,
+                modelConfig: MODEL_CONFIG,
+                productImage,
+                referenceImage,
+                useBackend,
+                backendUrl: BACKEND_URL,
+                geminiApiKey,
+                productName,
+                productFeatures,
+                track: 'plan',
+              });
+              setGeneratedImages((prev) => ({ ...prev, [i]: { data: result.dataUrl, prompt: result.prompt } }));
+            } catch (err) {
+              const msg = err instanceof Error ? err.message : '생성 실패';
+              console.error(`[Retry] 섹션 ${i + 1} 실패:`, msg);
+              setGeneratedImages((prev) => ({ ...prev, [i]: { data: '', prompt: '', error: msg } }));
+            }
+            setGenerationProgress(Math.round(((i + 1) / generatedSections.length) * 100));
+            if (i < generatedSections.length - 1) await new Promise((r) => setTimeout(r, 2000));
+          }
+        } finally {
+          setIsGenerating(false);
+        }
+      })();
+    } else {
+      // Track 2 또는 기획 없으면 그냥 재실행
+      generateTrack2();
+    }
+  }, [selectedTrack, generatedSections, productImage, referenceImage, useBackend, geminiApiKey, productName, productFeatures, setIsGenerating, setGenerationProgress, setGeneratedImages, generateTrack2]);
+
   // 다운로드
   const handleDownload = useCallback(async () => {
     const JSZip = (await import('jszip')).default;
@@ -205,10 +250,10 @@ export function Step2Page() {
         <div className="bg-red-500/10 border border-red-500/30 rounded-xl p-6 mb-6 text-center">
           <div className="text-red-400 text-sm mb-4">{error}</div>
           <button
-            onClick={() => { setError(null); setSelectedTrack(null); setGeneratedImages({}); }}
-            className="px-6 py-2 bg-bg-secondary border border-border-subtle rounded-xl text-sm text-text-primary hover:border-border-default"
+            onClick={retryImageGeneration}
+            className="px-6 py-2 bg-accent-primary text-white rounded-xl text-sm font-bold hover:opacity-90"
           >
-            다시 시도
+            이미지 재생성
           </button>
         </div>
       )}
@@ -222,10 +267,16 @@ export function Step2Page() {
             </h2>
             <div className="flex gap-3">
               <button
-                onClick={() => { setGeneratedImages({}); setSelectedTrack(null); }}
+                onClick={retryImageGeneration}
                 className="px-4 py-2 bg-bg-secondary border border-border-subtle rounded-xl text-sm text-text-secondary hover:border-border-default transition-colors"
               >
-                다시 생성
+                이미지 재생성
+              </button>
+              <button
+                onClick={() => { setGeneratedImages({}); setSelectedTrack(null); setError(null); }}
+                className="px-4 py-2 bg-bg-secondary border border-border-subtle rounded-xl text-sm text-text-secondary hover:border-border-default transition-colors"
+              >
+                처음부터
               </button>
               <button
                 onClick={handleDownload}
