@@ -57,7 +57,6 @@ export const useImageStore = create<ImageState>()(
       storage: createJSONStorage(() => sessionStorage),
       partialize: (state) => ({
         uploadedImages: state.uploadedImages,
-        generatedImages: state.generatedImages,
       }),
     }
   )
