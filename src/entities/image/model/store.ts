@@ -1,5 +1,4 @@
 import { create } from 'zustand';
-import { persist, createJSONStorage } from 'zustand/middleware';
 import type { GeneratedImage, UploadedImages } from '@/shared/types';
 
 const LS_GEMINI_KEY = 'detailcraft_gemini_key';
@@ -26,7 +25,6 @@ interface ImageState {
 }
 
 export const useImageStore = create<ImageState>()(
-  persist(
     (set) => ({
       geminiApiKey: (() => { try { return localStorage.getItem(LS_GEMINI_KEY) || ''; } catch { return ''; } })(),
       useBackend: true,
@@ -51,13 +49,5 @@ export const useImageStore = create<ImageState>()(
       generationProgress: 0,
       setIsGenerating: (v) => set({ isGenerating: v }),
       setGenerationProgress: (v) => set({ generationProgress: v }),
-    }),
-    {
-      name: 'detailcraft_image_session',
-      storage: createJSONStorage(() => sessionStorage),
-      partialize: (state) => ({
-        uploadedImages: state.uploadedImages,
-      }),
-    }
-  )
+    })
 );
