@@ -100,8 +100,8 @@ export function Step1Page() {
       // 3. 제품-레퍼런스 매칭 (분석된 레퍼런스가 있을 때)
       // 섹션 타입 순서 정의 (상세페이지 흐름 기준)
       const SECTION_ORDER: SectionType[] = [
-        'hero', 'point', 'comparison', 'flavor', 'closeup',
-        'lifestyle', 'product-cut', 'sizzle', 'impact-typo', 'lineup',
+        'hero', 'point', 'flavor', 'closeup',
+        'lifestyle', 'product-cut', 'sizzle', 'lineup',
         'empathy', 'cta', 'recipe', 'trust', 'spec',
         'bundle', 'divider', 'situation', 'review', 'faq',
       ];

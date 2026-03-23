@@ -10,9 +10,7 @@ export type ToastType = 'success' | 'error' | 'info';
 export type SectionType =
   | 'hero'
   | 'empathy'
-  | 'impact-typo'
   | 'point'
-  | 'comparison'
   | 'trust'
   | 'divider'
   | 'lifestyle'

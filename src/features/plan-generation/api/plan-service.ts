@@ -219,8 +219,7 @@ ${importedSectionTypes.map((type, i) => `${i + 1}. [${type}] ${SECTION_TYPE_LABE
 
 아래 기준으로 선택 섹션 포함 여부를 판단하세요:
 
-A. 식감/촉감 등 감각적 특성이 강한 제품 → 임팩트 타이포(impact-typo) 포함
-B. 다양한 상황(소풍, 사무실, 캠핑 등)에서 사용 가능 → 상황 연출(situation) 포함
+A. 다양한 상황(소풍, 사무실, 캠핑 등)에서 사용 가능 → 상황 연출(situation) 포함
 C. 가격 앵커링이나 자주 묻는 질문이 필요 → FAQ(faq) 포함
 D. 초콜릿/소스/치즈 등 풍미/질감이 핵심인 제품 → 씨즐컷(sizzle) 포함
 
@@ -230,9 +229,7 @@ D. 초콜릿/소스/치즈 등 풍미/질감이 핵심인 제품 → 씨즐컷(s
 필수 섹션: 히어로(hero) + 공감(empathy) + POINT(2~3개) + 라이프스타일(lifestyle) + 리뷰(review) + CTA
 선택 섹션 (해당 시 포함):
 - [씨즐컷(sizzle)]: 초콜릿/소스/치즈 등 풍미/질감이 핵심인 제품 → hero와 point 사이에 배치
-- [임팩트 타이포(impact-typo)]: 식감/촉감 등 감각적 특성이 강한 제품 → empathy 뒤에 배치
-- [비교(comparison)]: 경쟁 제품 대비 차별점이 있는 경우 → POINT 뒤에 배치
-- [신뢰/인증(trust)]: HACCP, 수상, 인증 등이 있는 경우 → comparison 뒤에 배치
+- [신뢰/인증(trust)]: HACCP, 수상, 인증 등이 있는 경우 → POINT 뒤에 배치
 - [전환 브릿지(divider)]: 섹션 전환이 필요한 곳 → 중간 전환점에 배치
 - [상황 연출(situation)]: TPO가 다양한 제품 → 라이프스타일 뒤에 배치
 - [사용법/레시피(recipe)]: 조리법이나 활용법이 있는 경우 → situation 뒤에 배치
@@ -243,7 +240,7 @@ ${importedSectionTypes && importedSectionTypes.length >= 8
 ? `★ 레퍼런스 기반 배치 순서 (위의 "레퍼런스 기반 섹션 구성"을 따르세요) ★
 총 섹션 수: 정확히 ${importedSectionTypes.length}개 (레퍼런스 폴더 수에 맞춤)`
 : `★ 검증된 배치 순서 ★
-hero → empathy → comparison → point(2~3개) → [impact-typo] → lifestyle → [situation] → review → [faq] → cta
+hero → empathy → point(2~3개) → lifestyle → [situation] → review → [faq] → cta
 ${importedSectionTypes && importedSectionTypes.length > 0 ? `\n★ 레퍼런스 폴더가 ${importedSectionTypes.length}개 있습니다. 이 섹션 타입(${importedSectionTypes.join(', ')})을 반드시 포함하되, 나머지는 위 배치 순서에서 추가하여 총 8개 이상으로 구성하세요.` : ''}
 총 섹션 수: 정확히 8개 이상 생성하세요. 8개 미만은 절대 불가합니다.
 ★★★ 반드시 8개 이상의 [SECTION_START]...[SECTION_END] 블록을 출력하세요 ★★★`}
@@ -383,16 +380,6 @@ ${importedSectionTypes && importedSectionTypes.length >= 8
 - ★ "X는 하고 싶은데 Y는 챙기고 싶다면?" 패턴 사용 금지 — 너무 뻔함
 - ★ "~을 찾고 계신가요?", "~이 고민이신가요?" 단독 사용 금지 — 구체적 장면 없이 질문만 던지면 ✗
 
-### [comparison] 비교 (필수, 1장)
-- 일반 제품/기존 방식 vs 이 제품의 시각적 비교
-- 좌우 또는 상하 분할로 차이를 명확히 표현
-- 일반 쪽: 저채도/흑백, 이 제품 쪽: 선명한 컬러
-- VS 타이포를 대형으로 디자인
-- ★ 비교 항목은 제품 정보에서 도출된 실제 차이점만 사용
-- 카피 톤: 팩트 중심의 냉정한 비교, 감정 과잉 금지
-  - 좋은 예: "밀가루+설탕 vs 밀가루+감자+옥수수+두부"
-  - 나쁜 예: "일반 과자 vs 두부과자, 선택은?" (결론 없는 질문)
-
 ### [point] 포인트 (필수, 2~3장)
 - POINT.01, POINT.02... 넘버링 라벨 + 헤드라인이 디자인된 타이포
 - 각 포인트는 고유한 셀링 포인트 1개에 집중
@@ -403,16 +390,6 @@ ${importedSectionTypes && importedSectionTypes.length >= 8
   - 좋은 예: "표면의 작은 구멍들이 만드는 특별한 식감"
   - 나쁜 예: "한 번 먹으면 멈출 수 없는 바삭함" (과장 클리셰)
   - ★ "한 번 ~하면 멈출 수 없는" 패턴 금지 — 모든 과자가 쓰는 상투구
-
-### [impact-typo] 임팩트 타이포 (선택, 1장)
-- 핵심 키워드 1~2개를 화면 가득 채우는 초대형 디자인 타이포
-- 의성어/의태어 활용 (바삭, 오독오독, 촉촉 등)
-- 제품 이미지 없이 순수 타이포만으로 시각적 임팩트
-- 스크롤 중 정보 피로를 해소하는 "시각적 쉼표" 역할
-- POINT 사이 또는 POINT 뒤에 배치
-- 카피 톤: 짧고 강렬 (3~6자), 설명 없이 감각만
-  - 좋은 예: "오독오독", "바삭!", "콩을 깨물다"
-  - 나쁜 예: "건강한 바삭함" (추상 개념 조합), "죄책감 ZERO" (근거 없는 감정 조작)
 
 ### [sizzle] 씨즐컷 (선택, 1장)
 - 제품의 식감/풍미/질감을 극대화하는 매크로 클로즈업 전용 섹션
@@ -570,7 +547,7 @@ ${importedSectionTypes && importedSectionTypes.length >= 8
 [SECTION_START]
 섹션번호: N
 섹션명: 실제 섹션 이름
-섹션유형: hero / empathy / comparison / point / impact-typo / sizzle / lifestyle / situation / review / faq / cta / flavor / closeup / product-cut / lineup / recipe / trust / spec / bundle
+섹션유형: hero / empathy / point / sizzle / lifestyle / situation / review / faq / cta / flavor / closeup / product-cut / lineup / recipe / trust / spec / bundle
 목적: 이 섹션이 판매에 기여하는 방식
 헤드라인: (10~18자)
 헤드라인대안: 감각묘사 | 상황제시 | 질문형 | 대비반전 | 팩트기반
@@ -629,7 +606,7 @@ ${importedSectionTypes && importedSectionTypes.length >= 8
 
 ★★★ 구조 검증 ★★★
 - STEP 0에서 선택한 유형에 해당하는 선택 섹션이 실제로 포함되었는가?
-- hero → empathy → comparison → point → lifestyle → review → cta 순서가 지켜졌는가?
+- hero → empathy → point → lifestyle → review → cta 순서가 지켜졌는가?
 - 비주얼 톤이 모든 섹션에 일관되게 적용되었는가?
 
 ---
@@ -694,10 +671,7 @@ export function parseSections(text: string): Section[] {
     const typeMap: Record<string, string> = {
       hero: 'hero',
       empathy: 'empathy',
-      'impact-typo': 'impact-typo',
-      'impact_typo': 'impact-typo',
       point: 'point',
-      comparison: 'comparison',
       trust: 'trust',
       divider: 'divider',
       lifestyle: 'lifestyle',
@@ -758,7 +732,7 @@ export function parseSections(text: string): Section[] {
 
   // ── 섹션유형 유효성 검증: 유효하지 않은 sectionType → undefined ──
   const VALID_SECTION_TYPES: Set<string> = new Set<string>([
-    'hero', 'empathy', 'impact-typo', 'point', 'comparison',
+    'hero', 'empathy', 'point',
     'trust', 'divider', 'lifestyle', 'situation', 'recipe',
     'review', 'faq', 'sizzle', 'cta', 'spec', 'bundle',
     'flavor', 'closeup', 'lineup', 'product-cut',

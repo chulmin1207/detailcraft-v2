@@ -7,8 +7,8 @@ import type { SectionType, SectionReferenceFolder } from '@/shared/types';
 
 // 섹션 타입 표시 순서 (상세페이지 흐름 기준)
 const SECTION_TYPE_ORDER: SectionType[] = [
-  'hero', 'point', 'comparison', 'flavor', 'closeup',
-  'lifestyle', 'product-cut', 'sizzle', 'impact-typo', 'lineup',
+  'hero', 'point', 'flavor', 'closeup',
+  'lifestyle', 'product-cut', 'sizzle', 'lineup',
   'empathy', 'cta', 'recipe', 'trust', 'spec',
   'bundle', 'divider', 'situation', 'review', 'faq',
 ];
@@ -25,9 +25,6 @@ const KOREAN_FOLDER_MAP: Record<string, SectionType> = {
   '제품특징': 'point',
   '제품특징-usp': 'point',
   'usp': 'point',
-  '비교': 'comparison',
-  '차별화': 'comparison',
-  '비교-차별화': 'comparison',
   '맛': 'flavor',
   '플레이버소개': 'flavor',
   '맛-플레이버소개': 'flavor',
@@ -43,7 +40,6 @@ const KOREAN_FOLDER_MAP: Record<string, SectionType> = {
   '단면': 'sizzle',
   '씨즐컷': 'sizzle',
   '단면-씨즐컷': 'sizzle',
-  '브랜딩': 'impact-typo',
   '제품-라인업': 'lineup',
   '라인업': 'lineup',
   '공감': 'empathy',

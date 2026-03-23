@@ -52,9 +52,7 @@ export function getModelConfigWithRatio(
 export const SECTION_TYPE_LABELS: Record<SectionType, string> = {
   'hero': '히어로',
   'empathy': '공감',
-  'impact-typo': '임팩트 타이포',
   'point': '포인트',
-  'comparison': '비교',
   'trust': '신뢰/인증',
   'divider': '전환 브릿지',
   'lifestyle': '라이프스타일',

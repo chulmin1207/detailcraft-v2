@@ -366,20 +366,6 @@ const SECTION_TYPE_LAYOUTS: Record<string, SectionLayout> = {
 뱃지/스티커 요소, 감성 일러스트`,
     productPlacement: '★★★ 제품/패키지 등장 금지. 공감 텍스트만으로 구성.',
   },
-  comparison: {
-    role: '비교 — 일반 제품 vs 이 제품의 차별점을 시각적으로 증명',
-    layout: `좌우 또는 상하 분할 레이아웃:
-한쪽: 일반 제품/기존 방식 (흑백 또는 저채도 톤)
-다른 쪽: 이 제품 (선명한 컬러, 밝은 톤)
-상단에 비교 헤드라인 디자인 타이포, 하단에 비교 항목 인포그래픽`,
-    typography: `VS 타이포를 대형으로 디자인 (원형 배경, 색상 대비)
-비교 항목 텍스트: 좌측은 약한 톤, 우측은 강한 톤
-핵심 차이점은 초대형 디자인 타이포로 강조`,
-    graphicElements: `VS 그래픽 요소 (원형, 대각선 분할)
-체크/X 마크로 비교 항목 시각화
-비교 대상별 색상 코딩 (회색 vs 브랜드 컬러)`,
-    productPlacement: '이 제품 쪽에 패키지/제품 사진을 선명하게 배치',
-  },
   point: {
     role: '핵심 포인트 — 구조화된 셀링 포인트 (POINT.01, 02...)',
     layout: `상단 텍스트 영역: 색상 배경 + 디자인된 타이포 (POINT 넘버 + 헤드라인)
@@ -393,25 +379,6 @@ const SECTION_TYPE_LAYOUTS: Record<string, SectionLayout> = {
 비교 인포그래픽 (사진 기반 비교 — 실제 식재료 사진 활용)
 원형 아이콘 + 일러스트`,
     productPlacement: '제품 원물/클로즈업 중심. ★ 패키지 이미지는 넣지 마세요 — hero/다른 섹션에서 이미 보여줬으므로 반복 시 피로도 상승. 원재료, 단면, 비교 소품으로 구성.',
-  },
-  'impact-typo': {
-    role: '임팩트 타이포 — 핵심 키워드를 초대형 디자인 타이포로 환기',
-    layout: `전체 화면을 채우는 대형 디자인 타이포그래피 중심 구성.
-★ 배경색은 반드시 제품 패키지 컬러에서 추출 — 검은색/어두운색 기본값 금지
-★ 패키지가 노란색이면 노란색 계열, 초록이면 초록 계열 배경 사용
-★ 이것은 한국 이커머스 상세페이지의 "한 섹션" 느낌이어야 함 — 독립 광고 포스터가 아님
-제품 클로즈업 또는 씨즐컷과 함께 타이포그래피로 시각적 임팩트 전달
-스크롤 중 시각적 "쉼표" 역할 — 정보 피로 해소`,
-    typography: `핵심 키워드 1~2개를 화면 가득 채우는 초대형 디자인 타이포:
-- 글자 자체가 재질/텍스처를 가진 작품 — 과자 재질로 부서지는, 초콜릿으로 녹는, 물이 흐르는 등
-- 글자에 제품 특성이 반영된 텍스처 적용 (바삭한 제품이면 글자가 갈라지고 부서지는 느낌)
-- 의성어/의태어 활용 (바삭, 오독오독, 촉촉 등)
-- 서브카피는 매우 작고 가벼운 톤으로 하단에 배치`,
-    graphicElements: `최소한의 그래픽 — 타이포그래피가 주인공
-배경은 단순 무지가 아니라 제품 파편이 뒤에서 폭발하듯 휘몰아치는 다이나믹한 연출 추가
-글자 뒤에 은은한 빛/그라데이션
-제품 클로즈업이나 부서지는 모습 등 다이나믹 요소 가능`,
-    productPlacement: '제품 클로즈업 또는 씨즐컷이 타이포그래피와 함께 배치',
   },
   lifestyle: {
     role: '라이프스타일 — 실제 사용 장면으로 구매 후 모습 시각화',
@@ -434,6 +401,7 @@ const SECTION_TYPE_LAYOUTS: Record<string, SectionLayout> = {
   sizzle: {
     role: '씨즐컷 — 제품의 식감/풍미/질감을 극대화하는 감각적 클로즈업',
     layout: `제품의 맛있는 순간을 포착한 매크로/클로즈업 중심 구성.
+★ 배경은 반드시 밝은 베이지/크림 톤 사용 — 어두운 배경 금지
 ★ 상단에 짧은 감각적 카피 (3~8자), 하단에 서브카피
 ★ 중앙에 제품의 가장 맛있어 보이는 순간을 크게 배치
 ★ 초콜릿이 녹거나 흐르는, 치즈가 늘어나는, 과즙이 터지는 등 "동적인 맛 순간"
@@ -458,6 +426,7 @@ const SECTION_TYPE_LAYOUTS: Record<string, SectionLayout> = {
 ★ 다중 컷(2컷, 4컷 등) 구성 시 각 컷 사이에 충분한 여백(간격) 포함
 ★ 각 컷은 둥근 모서리(border-radius)로 카드 느낌
 ★ 컷이 다닥다닥 붙지 않도록 — 최소 8~12px 간격 시각적으로 확보
+★ 그리드 레이아웃 사용 시 각 칸 사이에 반드시 흰색 구분선(약 8px)을 넣어 명확히 분리하세요.
 사진이 80% 이상 차지, 텍스트는 사진 위에 자연스럽게 오버레이
 상황의 분위기가 사진 전체에서 느껴지도록`,
     typography: `상황 설명 캡션: 가벼운 디자인 타이포 (사진 위 오버레이)
@@ -525,6 +494,7 @@ CTA 버튼 그래픽 (라운드 사각형)
     role: '섹션 전환 브릿지 — 시각적 환기, 스크롤 피로 방지',
     layout: `★ 반드시 가로로 넓고 세로로 얇은 비율 (약 3:1 또는 4:1)
 ★ 단순히 제품을 나열하지 말고, 다이나믹하고 풍미감 있는 연출 필요
+★ 제품 이미지는 1번만 배치. 절대 반복하지 마세요. 밝은 베이지/크림 배경 사용.
 제품 누끼를 클로즈업으로 크게 보여주며, 소스/시럽이 흐르거나 부서지는 동적 연출
 또는 제품 원재료(초콜릿, 과일, 곡물 등)와 함께 역동적으로 배치
 텍스트 없음 — 순수 비주얼만
@@ -577,7 +547,6 @@ export const SECTION_DEFAULT_RATIOS: Record<string, AspectRatio> = {
   empathy: 'auto',
   situation: 'auto',
   sizzle: 'auto',
-  'impact-typo': 'auto',
   point: 'auto',
   lifestyle: 'auto',
   divider: 'auto',
@@ -589,7 +558,6 @@ export const SECTION_DEFAULT_RATIOS: Record<string, AspectRatio> = {
   lineup: 'auto',
   'product-cut': 'auto',
   cta: 'auto',
-  comparison: 'auto',
   recipe: 'auto',
   faq: 'auto',
   spec: 'auto',
@@ -655,18 +623,16 @@ export function resolveAutoRatio(
 const SECTION_NUMBER_TO_TYPE: Record<number, SectionType> = {
   1: 'hero',
   2: 'empathy',
-  3: 'impact-typo',
-  4: 'point',
-  5: 'comparison',
-  6: 'trust',
-  7: 'divider',
-  8: 'lifestyle',
-  9: 'situation',
-  10: 'recipe',
-  11: 'review',
-  12: 'faq',
-  13: 'cta',
-  14: 'spec',
+  3: 'point',
+  4: 'trust',
+  5: 'divider',
+  6: 'lifestyle',
+  7: 'situation',
+  8: 'recipe',
+  9: 'review',
+  10: 'faq',
+  11: 'cta',
+  12: 'spec',
 };
 
 function getSectionLayout(section: Section): SectionLayout {
@@ -1377,6 +1343,7 @@ ${step3Prompt}`;
 
     if (refImageAttached) {
       // ===== 레퍼런스 있을 때: Google AI Studio 스타일 단순 프롬프트 =====
+      console.log(`%c[RefMode] 섹션 ${section.number} — 레퍼런스 모드 활성! 단순 프롬프트 사용`, 'color: green; font-weight: bold');
       const simplePrompt = `위 이미지는 레퍼런스 디자인입니다.
 이 레퍼런스를 참고하여 아래 제품의 상세페이지 섹션 이미지를 만들어주세요.
 레퍼런스의 디자인을 그대로 복사하지 말고, 적절하게 변형하여 새로운 디자인을 만드세요.
@@ -1405,6 +1372,7 @@ ${step3Prompt}`;
       }
     } else {
       // ===== 레퍼런스 없을 때: 기존 상세 프롬프트 =====
+      console.log(`%c[RefMode] 섹션 ${section.number} — 레퍼런스 없음! 기존 상세 프롬프트 사용`, 'color: red; font-weight: bold');
       parts.push({ text: prompt });
     }
 
@@ -1418,9 +1386,7 @@ ${step3Prompt}`;
       const DEFAULT_VISUAL_MODES_BY_TYPE: Record<string, VisualMode> = {
         'hero': 'product-hero',
         'empathy': 'emotional',
-        'impact-typo': 'emotional',
         'point': 'product-detail',
-        'comparison': 'infographic',
         'trust': 'infographic',
         'sizzle': 'product-detail',
         'divider': 'product-hero',
