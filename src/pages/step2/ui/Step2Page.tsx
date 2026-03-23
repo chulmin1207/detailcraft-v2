@@ -169,8 +169,8 @@ export function Step2Page() {
             <div className="text-2xl mb-3">{'\u{1F4CB}'}</div>
             <h3 className="text-xl font-bold text-text-primary mb-2">1안: 상세 기획</h3>
             <p className="text-sm text-text-secondary leading-relaxed">
-              Claude가 제품에 맞는 헤드라인, 서브카피를 기획한 후<br />
-              Gemini가 각 섹션 이미지를 생성합니다.
+              AI가 제품에 맞는 카피를 기획한 후<br />
+              각 섹션 이미지를 생성합니다.
             </p>
             <div className="mt-4 text-xs text-text-tertiary">소요시간: 약 5-8분</div>
           </button>
@@ -182,8 +182,8 @@ export function Step2Page() {
             <div className="text-2xl mb-3">{'\u26A1'}</div>
             <h3 className="text-xl font-bold text-text-primary mb-2">2안: 심플 생성</h3>
             <p className="text-sm text-text-secondary leading-relaxed">
-              기획 없이 섹션 이름과 레퍼런스만으로<br />
-              Gemini가 직접 이미지를 생성합니다.
+              레퍼런스 기반으로<br />
+              바로 이미지를 생성합니다.
             </p>
             <div className="mt-4 text-xs text-text-tertiary">소요시간: 약 3-5분</div>
           </button>
