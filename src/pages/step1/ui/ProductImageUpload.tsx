@@ -9,7 +9,7 @@ function useUploadZone(type: SlotType, max: number) {
   const [dragOver, setDragOver] = useState(false);
   const zoneRef = useRef<HTMLDivElement>(null);
   const clickCount = useRef(0);
-  const clickTimer = useRef<ReturnType<typeof setTimeout>>();
+  const clickTimer = useRef<ReturnType<typeof setTimeout>>(undefined);
 
   const addImages = useCallback((files: FileList | File[]) => {
     Array.from(files).forEach((file) => {
