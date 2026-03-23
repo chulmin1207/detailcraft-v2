@@ -1128,7 +1128,6 @@ export async function generateSectionImage(
     refStrength,
     headline,
     subCopy,
-    userVisualPrompt,
     sectionRefFolders,
   } = params;
 
@@ -1283,44 +1282,31 @@ ${step3Prompt}`;
 
     const hl = headline || section.headline || '';
     const sc = subCopy || section.subCopy || '';
-    const vp = userVisualPrompt || section.visualPrompt || '';
-    const sectionLayout = getSectionLayout(section);
 
-    // 1) 시스템 프롬프트 + 섹션별 지시
+    // 1) CLI 테스트와 동일한 심플 프롬프트 (2026-03-23 검증 완료)
     prompt = `당신은 한국 이커머스 상세페이지 디자인 전문가입니다.
 
 [절대 규칙]
 1. 반드시 한국어 텍스트를 정확하게 렌더링하세요
-2. 레퍼런스 이미지가 있으면 그 디자인 톤, 색감, 타이포그래피 스타일을 기반으로 하되, 레이아웃을 변주하세요
+2. 레퍼런스 이미지의 디자인 톤, 색감, 타이포그래피 스타일을 기반으로 하되, 각 섹션마다 레이아웃을 변주하세요
 3. 제품 이미지의 패키지 디자인을 정확하게 반영하세요 — 색상, 형태, 텍스트 왜곡 없이
-4. 전체 상세페이지의 톤 & 무드를 일관되게 유지하세요
+4. 전체 상세페이지가 하나의 톤으로 자연스럽게 이어지도록 톤 & 무드를 일관되게 유지하세요
 5. 사람 얼굴 금지 — 손/팔까지만 허용
-6. 가짜 인증마크(HACCP, ISO 등), 허위 수치(만족도 %, 판매량) 생성 금지
-7. 섹션 라벨/메타 텍스트("섹션 유형: point" 등) 노출 금지
-
-이 이미지는 860px 너비의 이커머스 상세페이지 섹션입니다.
+6. 가짜 인증마크(HACCP, ISO 등), 허위 수치 생성 금지
 
 [섹션 ${section.number} — ${section.name}]
-역할: ${sectionLayout.role}
 
 텍스트 내용:
 - 헤드라인: ${hl}
 - 서브카피: ${sc}
 
-레이아웃 가이드:
-${sectionLayout.layout}
+제품명: ${productName}`;
 
-제품 배치:
-${sectionLayout.productPlacement}
-
-비주얼 지시:
-${vp}
-
-제품명: ${productName}
-제품 특징: ${productFeatures}`;
-
+    if (productFeatures.trim()) {
+      prompt += `\n제품 특징: ${productFeatures}`;
+    }
     if (additionalNotes.trim()) {
-      prompt += `\n\n추가 요구사항:\n${additionalNotes}`;
+      prompt += `\n추가 요구사항: ${additionalNotes}`;
     }
 
     parts.push({ text: prompt });
