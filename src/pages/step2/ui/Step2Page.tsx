@@ -1,7 +1,7 @@
 import { useState, useCallback } from 'react';
 import { useProductStore } from '@/entities/product';
 import { useImageStore } from '@/entities/image';
-import { generateSectionImage } from '@/features/image-generation';
+import { generateSectionImage, editSectionImage } from '@/features/image-generation';
 import { buildPlanPrompt, callClaudeForPlan, parseSections } from '@/features/plan-generation';
 import { FIXED_SECTIONS } from '@/shared/config/sections';
 import { MODEL_CONFIG, BACKEND_URL, PLATFORM_CONFIGS } from '@/shared/config/constants';
@@ -13,6 +13,9 @@ export function Step2Page() {
   const { uploadedImages, generatedImages, setGeneratedImages, useBackend, geminiApiKey, isGenerating, setIsGenerating, generationProgress, setGenerationProgress } = useImageStore();
 
   const [error, setError] = useState<string | null>(null);
+  const [editingIndex, setEditingIndex] = useState<number | null>(null);
+  const [editPrompt, setEditPrompt] = useState('');
+  const [isEditing, setIsEditing] = useState(false);
 
   const productImage = uploadedImages.product[0] || '';
   const referenceImage = uploadedImages.references[0] || '';
@@ -160,6 +163,35 @@ export function Step2Page() {
     }
   }, [selectedTrack, generatedSections, productImage, referenceImage, useBackend, geminiApiKey, productName, productFeatures, setIsGenerating, setGenerationProgress, setGeneratedImages]);
 
+  // 개별 이미지 수정
+  const handleEditImage = useCallback(async () => {
+    if (editingIndex === null || !editPrompt.trim()) return;
+    const originalImage = generatedImages[editingIndex]?.data;
+    if (!originalImage) return;
+
+    setIsEditing(true);
+    try {
+      const result = await editSectionImage({
+        originalImage,
+        editInstruction: editPrompt,
+        modelConfig: MODEL_CONFIG,
+        useBackend,
+        backendUrl: BACKEND_URL,
+        geminiApiKey,
+      });
+      setGeneratedImages((prev) => ({
+        ...prev,
+        [editingIndex]: { data: result.dataUrl, prompt: editPrompt },
+      }));
+      setEditingIndex(null);
+      setEditPrompt('');
+    } catch (err) {
+      setError(err instanceof Error ? err.message : '수정 실패');
+    } finally {
+      setIsEditing(false);
+    }
+  }, [editingIndex, editPrompt, generatedImages, useBackend, geminiApiKey, setGeneratedImages]);
+
   // 다운로드
   const handleDownload = useCallback(async () => {
     const JSZip = (await import('jszip')).default;
@@ -297,10 +329,19 @@ export function Step2Page() {
               const sectionName = section ? ('label' in section ? section.label : section.name) : `섹션 ${i + 1}`;
 
               return (
-                <div key={i} className="bg-bg-secondary border border-border-subtle rounded-xl overflow-hidden">
-                  <div className="aspect-[9/16] bg-bg-tertiary flex items-center justify-center">
+                <div
+                  key={i}
+                  className="bg-bg-secondary border border-border-subtle rounded-xl overflow-hidden cursor-pointer hover:border-accent-primary transition-colors group"
+                  onClick={() => { if (img?.data && !img.error) { setEditingIndex(i); setEditPrompt(''); } }}
+                >
+                  <div className="aspect-[9/16] bg-bg-tertiary flex items-center justify-center relative">
                     {img?.data && !img.error ? (
-                      <img src={img.data} alt={sectionName} className="w-full h-full object-cover" />
+                      <>
+                        <img src={img.data} alt={sectionName} className="w-full h-full object-cover" />
+                        <div className="absolute inset-0 bg-black/0 group-hover:bg-black/30 transition-all flex items-center justify-center">
+                          <span className="text-white text-sm font-bold opacity-0 group-hover:opacity-100 transition-opacity">클릭하여 수정</span>
+                        </div>
+                      </>
                     ) : img?.error ? (
                       <div className="text-center p-4">
                         <div className="text-red-400 text-xs">{img.error}</div>
@@ -317,6 +358,54 @@ export function Step2Page() {
             })}
           </div>
         </>
+      )}
+
+      {/* 이미지 수정 모달 */}
+      {editingIndex !== null && generatedImages[editingIndex]?.data && (
+        <div className="fixed inset-0 bg-black/60 z-50 flex items-center justify-center p-4" onClick={() => !isEditing && setEditingIndex(null)}>
+          <div className="bg-bg-secondary rounded-2xl max-w-2xl w-full max-h-[90vh] overflow-y-auto" onClick={(e) => e.stopPropagation()}>
+            <div className="p-6">
+              <div className="flex items-center justify-between mb-4">
+                <h3 className="text-lg font-bold text-text-primary">이미지 수정</h3>
+                <button onClick={() => !isEditing && setEditingIndex(null)} className="text-text-tertiary hover:text-text-primary text-xl">✕</button>
+              </div>
+
+              <div className="rounded-xl overflow-hidden mb-4 bg-bg-tertiary">
+                <img src={generatedImages[editingIndex].data} alt="원본" className="w-full max-h-[50vh] object-contain" />
+              </div>
+
+              <textarea
+                value={editPrompt}
+                onChange={(e) => setEditPrompt(e.target.value)}
+                placeholder='수정 요청을 입력하세요. 예: "배경을 더 밝게", "텍스트를 더 크게", "제품을 중앙에 배치"'
+                rows={3}
+                disabled={isEditing}
+                className="w-full px-4 py-3 bg-bg-primary border border-border-subtle rounded-xl text-text-primary placeholder:text-text-tertiary focus:border-accent-primary focus:outline-none transition-colors resize-none mb-4"
+              />
+
+              <div className="flex gap-3">
+                <button
+                  onClick={() => setEditingIndex(null)}
+                  disabled={isEditing}
+                  className="flex-1 py-3 bg-bg-tertiary border border-border-subtle rounded-xl text-sm text-text-secondary hover:border-border-default transition-colors"
+                >
+                  취소
+                </button>
+                <button
+                  onClick={handleEditImage}
+                  disabled={isEditing || !editPrompt.trim()}
+                  className={`flex-1 py-3 rounded-xl text-sm font-bold transition-all ${
+                    isEditing || !editPrompt.trim()
+                      ? 'bg-bg-tertiary text-text-tertiary cursor-not-allowed'
+                      : 'bg-accent-primary text-white hover:opacity-90'
+                  }`}
+                >
+                  {isEditing ? '수정 중...' : '수정 적용'}
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
       )}
     </section>
   );

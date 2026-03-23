@@ -238,3 +238,71 @@ export async function generateSectionImage(
 
   throw new Error('이미지가 생성되지 않았습니다.');
 }
+
+// ===== 이미지 수정 함수 (원본 기반) =====
+export async function editSectionImage(params: {
+  originalImage: string;
+  editInstruction: string;
+  modelConfig: { model: string; timeout: number; config: Record<string, unknown> };
+  useBackend: boolean;
+  backendUrl: string;
+  geminiApiKey: string;
+}): Promise<{ dataUrl: string }> {
+  const { originalImage, editInstruction, modelConfig, useBackend, backendUrl, geminiApiKey } = params;
+
+  const parts: Array<{ text: string } | { inlineData: { mimeType: string; data: string } }> = [];
+
+  // 원본 이미지
+  parts.push({
+    inlineData: { mimeType: 'image/jpeg', data: safeExtractBase64(originalImage) },
+  });
+  parts.push({
+    text: `위 이미지는 이커머스 상세페이지 섹션 이미지입니다.
+이 이미지를 기반으로 아래 수정 요청을 반영해주세요.
+원본의 전체적인 톤, 레이아웃, 스타일은 최대한 유지하면서 요청된 부분만 수정하세요.
+
+[수정 요청]
+${editInstruction}`,
+  });
+
+  const geminiUrl = useBackend
+    ? `${backendUrl}/api/gemini`
+    : `https://generativelanguage.googleapis.com/v1beta/models/${modelConfig.model}:generateContent?key=${geminiApiKey}`;
+
+  const reqBody: Record<string, unknown> = {
+    contents: [{ parts }],
+    generationConfig: {
+      responseModalities: ['TEXT', 'IMAGE'],
+      imageConfig: {
+        ...(modelConfig.config.imageConfig as Record<string, unknown>),
+        aspectRatio: '9:16',
+      },
+    },
+  };
+  if (useBackend) reqBody.model = modelConfig.model;
+
+  const response = await fetchWithRetry(
+    geminiUrl,
+    { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(reqBody) },
+    modelConfig.timeout,
+  );
+
+  if (!response.ok) {
+    const error = await response.json().catch(() => ({}));
+    throw new Error((error as { error?: { message?: string } }).error?.message || `API 오류 (${response.status})`);
+  }
+
+  const data = await response.json();
+  const candidates = (data as {
+    candidates?: Array<{ content?: { parts?: Array<{ inlineData?: { mimeType?: string; data?: string } }> } }>;
+  }).candidates || [];
+
+  for (const candidate of candidates) {
+    for (const part of (candidate.content?.parts || [])) {
+      if (part.inlineData?.mimeType?.startsWith('image/')) {
+        return { dataUrl: `data:${part.inlineData.mimeType};base64,${part.inlineData.data}` };
+      }
+    }
+  }
+  throw new Error('수정된 이미지가 생성되지 않았습니다.');
+}
