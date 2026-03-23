@@ -1,249 +1,273 @@
 import { useState, useCallback } from 'react';
 import { useProductStore } from '@/entities/product';
 import { useImageStore } from '@/entities/image';
-import { useToastStore } from '@/features/theme';
-import { generateSectionImage, Step3Progress } from '@/features/image-generation';
-import { MODEL_CONFIG, BACKEND_URL } from '@/shared/config/constants';
-import { PlanDisplay, SectionList } from '@/widgets/section-editor';
-import { BatchGenerate } from '@/features/image-generation';
-import { ProgressBar } from '@/shared/ui/components/ProgressBar';
+import { generateSectionImage } from '@/features/image-generation';
+import { buildPlanPrompt, callClaudeForPlan, parseSections } from '@/features/plan-generation';
+import { FIXED_SECTIONS } from '@/shared/config/sections';
+import { MODEL_CONFIG, BACKEND_URL, PLATFORM_CONFIGS } from '@/shared/config/constants';
+import type { GenerationTrack } from '@/shared/types';
+import { resizeImage, base64ToBlob } from '@/features/image-generation';
 
-interface LogEntry {
-  message: string;
-  type: string;
-}
-
-/**
- * STEP 2 페이지 컴포넌트
- * 기획서 표시 + 섹션 편집 + 일괄 이미지 생성
- */
 export function Step2Page() {
-  const {
-    generatedSections,
-    productName,
-    category,
-    productFeatures,
-    additionalNotes,
-    targetAudience,
-    goToStep,
-  } = useProductStore();
+  const { productName, productFeatures, selectedTrack, setSelectedTrack, generatedSections, setGeneratedSections } = useProductStore();
+  const { uploadedImages, generatedImages, setGeneratedImages, useBackend, geminiApiKey, isGenerating, setIsGenerating, generationProgress, setGenerationProgress } = useImageStore();
 
-  const {
-    generatedImages,
-    setGeneratedImages,
-    selectedAspectRatio,
-    uploadedImages,
-    sectionReferences,
-    sectionAspectRatios,
-    refStrength,
-    useBackend,
-    geminiApiKey,
-    designBrief,
-    imageAnalysis,
-    sectionDirectives,
-    sectionRefFolders,
-  } = useImageStore();
+  const [logs, setLogs] = useState<string[]>([]);
+  const [error, setError] = useState<string | null>(null);
 
-  const showToast = useToastStore((s) => s.showToast);
+  const addLog = (msg: string) => setLogs((prev) => [...prev, `[${new Date().toLocaleTimeString()}] ${msg}`]);
 
-  const [isBatchGenerating, setIsBatchGenerating] = useState(false);
-  const [batchProgress, setBatchProgress] = useState(0);
-  const [batchLogs, setBatchLogs] = useState<LogEntry[]>([]);
-  const [sectionStatuses, setSectionStatuses] = useState<Record<number, string>>({});
+  const productImage = uploadedImages.product[0] || '';
+  const referenceImage = uploadedImages.references[0] || '';
 
-  // 완료된 섹션 수 계산
-  const totalSections = generatedSections.length;
-  const completedSections = Object.values(generatedImages).filter(
-    (img) => img && !img.error,
-  ).length;
+  // Track 1: Claude 기획 → Gemini 이미지
+  const generateTrack1 = useCallback(async () => {
+    setIsGenerating(true);
+    setGenerationProgress(0);
+    setGeneratedImages({});
+    setError(null);
+    setLogs([]);
 
-  // 전체 이미지 일괄 생성
-  const handleGenerateAll = useCallback(async () => {
-    if (!useBackend && !geminiApiKey) {
-      showToast('Gemini API 키를 설정해주세요.', 'error');
-      return;
-    }
+    try {
+      // 1) Claude 기획
+      addLog('Claude 기획서 생성 중...');
+      const prompt = buildPlanPrompt(productName, productFeatures);
+      const response = await callClaudeForPlan(prompt, { useBackend, backendUrl: BACKEND_URL });
+      const sections = parseSections(response);
+      setGeneratedSections(sections);
+      addLog(`기획 완료: ${sections.length}개 섹션`);
 
-    if (generatedSections.length === 0) {
-      showToast('생성된 섹션이 없습니다.', 'error');
-      return;
-    }
-
-    setIsBatchGenerating(true);
-    setBatchProgress(0);
-    setBatchLogs([]);
-
-    const totalLength = generatedSections.length;
-
-    // 섹션별 상태 초기화
-    const initialStatuses: Record<number, string> = {};
-    for (let i = 0; i < totalLength; i++) {
-      initialStatuses[i] = 'pending';
-    }
-    setSectionStatuses(initialStatuses);
-
-    const addLog = (message: string, type = 'info') => {
-      const timestamp = new Date().toLocaleTimeString();
-      setBatchLogs((prev) => [...prev, { message: `[${timestamp}] ${message}`, type }]);
-    };
-
-    addLog('전체 이미지 생성 시작', 'info');
-
-    let successCount = 0;
-    let errorCount = 0;
-
-    for (let i = 0; i < totalLength; i++) {
-      const section = generatedSections[i];
-      setSectionStatuses((prev) => ({ ...prev, [i]: 'generating' }));
-      addLog(`섹션 ${section.number}: ${section.name} 생성 중...`, 'info');
-
-      try {
-        const imageData = await generateSectionImage({
-          section,
-          index: i,
-          modelConfig: MODEL_CONFIG,
-          uploadedImages,
-          sectionReferences,
-          step3Options: null,
-          useBackend,
-          backendUrl: BACKEND_URL,
-          geminiApiKey,
-          selectedAspectRatio: sectionAspectRatios[i] || selectedAspectRatio,
-          productName,
-          category: category || 'snack',
-          productFeatures,
-          additionalNotes,
-          generatedSections,
-          refStrength,
-          headline: section.headline,
-          subCopy: section.subCopy,
-          userVisualPrompt: section.visualPrompt,
-          targetAudience,
-          designBrief,
-          imageAnalysis,
-          sectionDirectives,
-          sectionRefFolders,
-        });
-
-        setGeneratedImages((prev) => ({
-          ...prev,
-          [i]: { data: imageData.dataUrl, prompt: imageData.prompt },
-        }));
-
-        addLog(`섹션 ${section.number} 생성 완료!`, 'success');
-        successCount++;
-        setSectionStatuses((prev) => ({ ...prev, [i]: 'done' }));
-      } catch (err: unknown) {
-        const message = err instanceof Error ? err.message : '알 수 없는 오류';
-        setGeneratedImages((prev) => ({
-          ...prev,
-          [i]: { data: '', prompt: '', error: message },
-        }));
-        addLog(`섹션 ${section.number} 실패: ${message}`, 'error');
-        errorCount++;
-        setSectionStatuses((prev) => ({ ...prev, [i]: 'error' }));
+      // 2) Gemini 이미지 생성
+      for (let i = 0; i < sections.length; i++) {
+        const section = sections[i];
+        addLog(`섹션 ${i + 1}: ${section.name} 생성 중...`);
+        try {
+          const result = await generateSectionImage({
+            section,
+            index: i,
+            totalSections: sections.length,
+            modelConfig: MODEL_CONFIG,
+            productImage,
+            referenceImage,
+            useBackend,
+            backendUrl: BACKEND_URL,
+            geminiApiKey,
+            productName,
+            productFeatures,
+            track: 'plan',
+          });
+          setGeneratedImages((prev) => ({ ...prev, [i]: { data: result.dataUrl, prompt: result.prompt } }));
+          addLog(`섹션 ${i + 1}: 완료`);
+        } catch (err) {
+          const msg = err instanceof Error ? err.message : '생성 실패';
+          addLog(`섹션 ${i + 1}: 실패 - ${msg}`);
+          setGeneratedImages((prev) => ({ ...prev, [i]: { data: '', prompt: '', error: msg } }));
+        }
+        setGenerationProgress(Math.round(((i + 1) / sections.length) * 100));
+        if (i < sections.length - 1) await new Promise((r) => setTimeout(r, 2000));
       }
+      addLog('전체 생성 완료!');
+    } catch (err) {
+      setError(err instanceof Error ? err.message : '생성 실패');
+    } finally {
+      setIsGenerating(false);
+    }
+  }, [productName, productFeatures, productImage, referenceImage, useBackend, geminiApiKey, setIsGenerating, setGenerationProgress, setGeneratedImages, setGeneratedSections]);
 
-      setBatchProgress(Math.round(((i + 1) / totalLength) * 100));
+  // Track 2: 심플 Gemini 직행
+  const generateTrack2 = useCallback(async () => {
+    setIsGenerating(true);
+    setGenerationProgress(0);
+    setGeneratedImages({});
+    setError(null);
+    setLogs([]);
+    addLog('심플 모드 이미지 생성 시작');
+
+    try {
+      for (let i = 0; i < FIXED_SECTIONS.length; i++) {
+        const section = FIXED_SECTIONS[i];
+        addLog(`섹션 ${i + 1}: ${section.label} 생성 중...`);
+        try {
+          const result = await generateSectionImage({
+            section,
+            index: i,
+            totalSections: FIXED_SECTIONS.length,
+            modelConfig: MODEL_CONFIG,
+            productImage,
+            referenceImage,
+            useBackend,
+            backendUrl: BACKEND_URL,
+            geminiApiKey,
+            productName,
+            productFeatures,
+            track: 'simple',
+          });
+          setGeneratedImages((prev) => ({ ...prev, [i]: { data: result.dataUrl, prompt: result.prompt } }));
+          addLog(`섹션 ${i + 1}: 완료`);
+        } catch (err) {
+          const msg = err instanceof Error ? err.message : '생성 실패';
+          addLog(`섹션 ${i + 1}: 실패 - ${msg}`);
+          setGeneratedImages((prev) => ({ ...prev, [i]: { data: '', prompt: '', error: msg } }));
+        }
+        setGenerationProgress(Math.round(((i + 1) / FIXED_SECTIONS.length) * 100));
+        if (i < FIXED_SECTIONS.length - 1) await new Promise((r) => setTimeout(r, 2000));
+      }
+      addLog('전체 생성 완료!');
+    } catch (err) {
+      setError(err instanceof Error ? err.message : '생성 실패');
+    } finally {
+      setIsGenerating(false);
+    }
+  }, [productName, productFeatures, productImage, referenceImage, useBackend, geminiApiKey, setIsGenerating, setGenerationProgress, setGeneratedImages]);
+
+  const handleStartGeneration = (track: GenerationTrack) => {
+    setSelectedTrack(track);
+    if (track === 'plan') generateTrack1();
+    else generateTrack2();
+  };
+
+  // 다운로드
+  const handleDownload = useCallback(async () => {
+    const JSZip = (await import('jszip')).default;
+    const zip = new JSZip();
+    const sections = selectedTrack === 'plan' ? generatedSections : FIXED_SECTIONS;
+
+    for (const config of PLATFORM_CONFIGS) {
+      const folder = zip.folder(config.folder)!;
+      for (let i = 0; i < sections.length; i++) {
+        const img = generatedImages[i];
+        if (!img?.data) continue;
+        const resized = await resizeImage(img.data, config.width);
+        const blob = base64ToBlob(resized);
+        const name = `${String(i + 1).padStart(2, '0')}_${sections[i].name}.png`;
+        folder.file(name, blob);
+      }
     }
 
-    const total = totalLength;
-    if (errorCount === 0) {
-      addLog(`전체 이미지 생성 완료! (${successCount}/${total} 성공)`, 'success');
-      showToast(`전체 이미지 생성 완료! (${successCount}개 성공)`, 'success');
-    } else {
-      addLog(`생성 완료: ${successCount}개 성공, ${errorCount}개 실패`, 'error');
-      showToast(`생성 완료: ${successCount}/${total} 성공, ${errorCount}개 실패`, 'error');
-    }
-    setIsBatchGenerating(false);
-  }, [
-    useBackend, geminiApiKey, generatedSections,
-    uploadedImages, sectionReferences, selectedAspectRatio, sectionAspectRatios,
-    productName, category, productFeatures, additionalNotes,
-    refStrength, targetAudience, designBrief, imageAnalysis,
-    sectionDirectives, sectionRefFolders, setGeneratedImages, showToast,
-  ]);
+    const content = await zip.generateAsync({ type: 'blob', compression: 'DEFLATE', compressionOptions: { level: 6 } });
+    const url = URL.createObjectURL(content);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `${productName}_상세페이지_${new Date().toISOString().slice(0, 10)}.zip`;
+    a.click();
+    URL.revokeObjectURL(url);
+  }, [generatedImages, generatedSections, productName, selectedTrack]);
 
-  // Step 3 이동
-  const handleGoToStep3 = useCallback(() => {
-    if (completedSections === 0) {
-      showToast('최소 1개 섹션의 이미지를 생성해주세요.', 'error');
-      return;
-    }
-    goToStep(3);
-  }, [completedSections, goToStep, showToast]);
+  const successCount = Object.values(generatedImages).filter((img) => img.data && !img.error).length;
+  const totalSections = selectedTrack === 'plan' ? generatedSections.length : FIXED_SECTIONS.length;
+  const hasResults = successCount > 0;
 
   return (
-    <section>
-      {/* 기획서 표시 */}
-      <PlanDisplay />
+    <section className="max-w-5xl mx-auto">
+      {/* 트랙 선택 (생성 시작 전) */}
+      {!isGenerating && !hasResults && (
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
+          <button
+            onClick={() => handleStartGeneration('plan')}
+            className="bg-bg-secondary border-2 border-border-subtle rounded-2xl p-8 text-left hover:border-accent-primary transition-all group"
+          >
+            <div className="text-2xl mb-3">{'\u{1F4CB}'}</div>
+            <h3 className="text-xl font-bold text-text-primary mb-2">1안: 상세 기획</h3>
+            <p className="text-sm text-text-secondary leading-relaxed">
+              Claude가 제품에 맞는 헤드라인, 서브카피를 기획한 후<br />
+              Gemini가 각 섹션 이미지를 생성합니다.
+            </p>
+            <div className="mt-4 text-xs text-text-tertiary">소요시간: 약 5-8분</div>
+          </button>
 
-      {/* 섹션별 편집기 */}
-      <SectionList />
-
-      {/* 생성 현황 */}
-      <div className="text-center">
-        <div className="bg-bg-tertiary border border-border-subtle rounded-[16px] p-5 mb-5 text-center">
-          <div className="flex justify-center items-center gap-3 mb-2">
-            <span className="text-[0.9rem] text-text-secondary">
-              &#x1F4CA; 생성 현황
-            </span>
-            <span className="text-[1.25rem] font-bold text-accent-gemini">
-              {completedSections}/{totalSections} 섹션 완료
-            </span>
-          </div>
-          <p className="text-[0.8rem] text-text-tertiary">
-            각 섹션의 &quot;&#x1F34C; 이미지 생성&quot; 버튼을 눌러 원하는 섹션만 생성하세요.
-          </p>
+          <button
+            onClick={() => handleStartGeneration('simple')}
+            className="bg-bg-secondary border-2 border-border-subtle rounded-2xl p-8 text-left hover:border-accent-primary transition-all group"
+          >
+            <div className="text-2xl mb-3">{'\u26A1'}</div>
+            <h3 className="text-xl font-bold text-text-primary mb-2">2안: 심플 생성</h3>
+            <p className="text-sm text-text-secondary leading-relaxed">
+              기획 없이 섹션 이름과 레퍼런스만으로<br />
+              Gemini가 직접 이미지를 생성합니다.
+            </p>
+            <div className="mt-4 text-xs text-text-tertiary">소요시간: 약 3-5분</div>
+          </button>
         </div>
+      )}
 
-        {/* 전체 일괄 생성 */}
-        <BatchGenerate
-          onGenerateAll={handleGenerateAll}
-          isGenerating={isBatchGenerating}
-          disabled={!useBackend && !geminiApiKey}
-          totalSections={totalSections}
-        />
+      {/* 생성 진행 상태 */}
+      {isGenerating && (
+        <div className="bg-bg-secondary border border-border-subtle rounded-2xl p-6 mb-6">
+          <div className="flex items-center justify-between mb-3">
+            <h3 className="font-bold text-text-primary">이미지 생성 중...</h3>
+            <span className="text-accent-primary font-bold">{generationProgress}%</span>
+          </div>
+          <div className="w-full bg-bg-tertiary rounded-full h-3 mb-4">
+            <div
+              className="bg-accent-primary h-3 rounded-full transition-all duration-500"
+              style={{ width: `${generationProgress}%` }}
+            />
+          </div>
+          <div className="bg-bg-primary rounded-xl p-4 max-h-48 overflow-y-auto text-xs text-text-secondary font-mono space-y-1">
+            {logs.map((log, i) => (
+              <div key={i}>{log}</div>
+            ))}
+          </div>
+        </div>
+      )}
 
-        {/* Step 3 이동 버튼 */}
-        <button
-          type="button"
-          onClick={handleGoToStep3}
-          disabled={completedSections === 0}
-          className={`
-            py-4 px-8 rounded-[10px] text-base font-medium border-none
-            transition-all duration-150
-            ${completedSections === 0
-              ? 'bg-gray-400 text-gray-200 cursor-not-allowed opacity-60'
-              : 'bg-accent-primary text-white cursor-pointer hover:bg-accent-primary-hover'}
-          `}
-        >
-          &#x1F4E5; 다운로드 페이지로 이동 &#x2192;
-          {completedSections > 0 && (
-            <span className="text-[0.8rem] opacity-80 ml-1">
-              ({completedSections}개 완료)
-            </span>
-          )}
-        </button>
-      </div>
+      {/* 에러 */}
+      {error && (
+        <div className="bg-red-500/10 border border-red-500/30 rounded-xl p-4 mb-6 text-red-400 text-sm">
+          {error}
+        </div>
+      )}
 
-      {/* 배치 생성 진행 상황 */}
-      {isBatchGenerating && (
+      {/* 결과 이미지 그리드 */}
+      {hasResults && !isGenerating && (
         <>
-          <Step3Progress
-            visible={true}
-            title={`이미지 생성 중... ${batchProgress}%`}
-            completed={Object.values(sectionStatuses).filter((s) => s === 'done' || s === 'error').length}
-            total={generatedSections.length}
-            sectionStatuses={sectionStatuses}
-          />
-          <ProgressBar
-            percent={batchProgress}
-            variant="gemini"
-            label="이미지를 생성하고 있습니다..."
-            showLog
-            logs={batchLogs}
-          />
+          <div className="flex items-center justify-between mb-6">
+            <h2 className="text-xl font-bold text-text-primary">
+              생성된 이미지 ({successCount}/{totalSections})
+            </h2>
+            <div className="flex gap-3">
+              <button
+                onClick={() => { setGeneratedImages({}); setSelectedTrack(null); }}
+                className="px-4 py-2 bg-bg-secondary border border-border-subtle rounded-xl text-sm text-text-secondary hover:border-border-default transition-colors"
+              >
+                다시 생성
+              </button>
+              <button
+                onClick={handleDownload}
+                className="px-6 py-2 bg-accent-primary text-white rounded-xl text-sm font-bold hover:opacity-90 transition-opacity"
+              >
+                ZIP 다운로드
+              </button>
+            </div>
+          </div>
+
+          <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
+            {Array.from({ length: totalSections }).map((_, i) => {
+              const img = generatedImages[i];
+              const sections = selectedTrack === 'plan' ? generatedSections : FIXED_SECTIONS;
+              const section = sections[i];
+              const sectionName = section ? ('label' in section ? section.label : section.name) : `섹션 ${i + 1}`;
+
+              return (
+                <div key={i} className="bg-bg-secondary border border-border-subtle rounded-xl overflow-hidden">
+                  <div className="aspect-[9/16] bg-bg-tertiary flex items-center justify-center">
+                    {img?.data && !img.error ? (
+                      <img src={img.data} alt={sectionName} className="w-full h-full object-cover" />
+                    ) : img?.error ? (
+                      <div className="text-center p-4">
+                        <div className="text-red-400 text-xs">{img.error}</div>
+                      </div>
+                    ) : (
+                      <div className="text-text-tertiary text-sm">대기중</div>
+                    )}
+                  </div>
+                  <div className="p-3">
+                    <div className="text-xs text-text-secondary truncate">{i + 1}. {sectionName}</div>
+                  </div>
+                </div>
+              );
+            })}
+          </div>
         </>
       )}
     </section>
