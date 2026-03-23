@@ -162,32 +162,38 @@ export async function generateSectionImage(
 
   parts.push({ text: prompt });
 
-  // 제품 이미지 (800px, 0.5q 압축 — 백엔드 프록시 body 제한 대응)
+  // 제품 이미지 (원본 그대로 — CLI와 동일)
   if (productImage) {
-    const compressed = await compressImageForAPI(productImage, 800, 0.5);
     parts.push({
-      inlineData: { mimeType: 'image/jpeg', data: safeExtractBase64(compressed) },
+      inlineData: { mimeType: 'image/jpeg', data: safeExtractBase64(productImage) },
     });
     parts.push({
       text: '위는 제품 이미지입니다. 이 제품의 패키지 디자인을 정확히 반영하세요. 절대로 다른 제품으로 바꾸거나 색상을 변경하지 마세요.',
     });
   }
 
-  // 레퍼런스 이미지
+  // 레퍼런스 이미지 (원본 그대로)
   if (referenceImage) {
-    const compressed = await compressImageForAPI(referenceImage, 800, 0.5);
     parts.push({
-      inlineData: { mimeType: 'image/jpeg', data: safeExtractBase64(compressed) },
+      inlineData: { mimeType: 'image/jpeg', data: safeExtractBase64(referenceImage) },
     });
     parts.push({
       text: '위는 레퍼런스 디자인입니다. 이 디자인의 톤, 색감, 스타일을 참고하되, 요청된 섹션에 맞게 레이아웃을 변주하세요.',
     });
   }
 
-  // Gemini API 호출 (백엔드 프록시 경유)
-  const geminiUrl = useBackend
-    ? `${backendUrl}/api/gemini`
-    : `https://generativelanguage.googleapis.com/v1beta/models/${modelConfig.model}:generateContent?key=${geminiApiKey}`;
+  // Gemini API 직접 호출 (헤더에 키 — URL 노출 방지)
+  let apiKey = geminiApiKey;
+  if (!apiKey && useBackend) {
+    const configRes = await fetch(`${backendUrl}/api/config`);
+    if (configRes.ok) {
+      const config = await configRes.json() as { geminiKey?: string };
+      apiKey = config.geminiKey || '';
+    }
+  }
+  if (!apiKey) throw new Error('Gemini API 키가 없습니다.');
+
+  const geminiUrl = `https://generativelanguage.googleapis.com/v1beta/models/${modelConfig.model}:generateContent`;
 
   const reqBody: Record<string, unknown> = {
     contents: [{ parts }],
@@ -199,13 +205,15 @@ export async function generateSectionImage(
       },
     },
   };
-  if (useBackend) reqBody.model = modelConfig.model;
 
   const response = await fetchWithRetry(
     geminiUrl,
     {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
+      headers: {
+        'Content-Type': 'application/json',
+        'x-goog-api-key': apiKey,
+      },
       body: JSON.stringify(reqBody),
     },
     modelConfig.timeout
@@ -252,10 +260,9 @@ export async function editSectionImage(params: {
 
   const parts: Array<{ text: string } | { inlineData: { mimeType: string; data: string } }> = [];
 
-  // 원본 이미지 (압축해서 전송)
-  const compressed = await compressImageForAPI(originalImage, 800, 0.5);
+  // 원본 이미지 (그대로 전송 — 품질 유지)
   parts.push({
-    inlineData: { mimeType: 'image/jpeg', data: safeExtractBase64(compressed) },
+    inlineData: { mimeType: 'image/jpeg', data: safeExtractBase64(originalImage) },
   });
   parts.push({
     text: `위 이미지는 이커머스 상세페이지 섹션 이미지입니다.
@@ -266,9 +273,18 @@ export async function editSectionImage(params: {
 ${editInstruction}`,
   });
 
-  const geminiUrl = useBackend
-    ? `${backendUrl}/api/gemini`
-    : `https://generativelanguage.googleapis.com/v1beta/models/${modelConfig.model}:generateContent?key=${geminiApiKey}`;
+  // API 키 (헤더 방식)
+  let apiKey = geminiApiKey;
+  if (!apiKey && useBackend) {
+    const configRes = await fetch(`${backendUrl}/api/config`);
+    if (configRes.ok) {
+      const config = await configRes.json() as { geminiKey?: string };
+      apiKey = config.geminiKey || '';
+    }
+  }
+  if (!apiKey) throw new Error('Gemini API 키가 없습니다.');
+
+  const geminiUrl = `https://generativelanguage.googleapis.com/v1beta/models/${modelConfig.model}:generateContent`;
 
   const reqBody: Record<string, unknown> = {
     contents: [{ parts }],
@@ -280,11 +296,10 @@ ${editInstruction}`,
       },
     },
   };
-  if (useBackend) reqBody.model = modelConfig.model;
 
   const response = await fetchWithRetry(
     geminiUrl,
-    { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(reqBody) },
+    { method: 'POST', headers: { 'Content-Type': 'application/json', 'x-goog-api-key': apiKey }, body: JSON.stringify(reqBody) },
     modelConfig.timeout,
   );
 
