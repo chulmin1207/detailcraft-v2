@@ -252,9 +252,10 @@ export async function editSectionImage(params: {
 
   const parts: Array<{ text: string } | { inlineData: { mimeType: string; data: string } }> = [];
 
-  // 원본 이미지
+  // 원본 이미지 (압축해서 전송)
+  const compressed = await compressImageForAPI(originalImage, 800, 0.5);
   parts.push({
-    inlineData: { mimeType: 'image/jpeg', data: safeExtractBase64(originalImage) },
+    inlineData: { mimeType: 'image/jpeg', data: safeExtractBase64(compressed) },
   });
   parts.push({
     text: `위 이미지는 이커머스 상세페이지 섹션 이미지입니다.

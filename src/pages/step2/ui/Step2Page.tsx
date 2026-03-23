@@ -170,7 +170,9 @@ export function Step2Page() {
     if (!originalImage) return;
 
     setIsEditing(true);
+    setError(null);
     try {
+      console.log('[Edit] 이미지 수정 시작:', editPrompt);
       const result = await editSectionImage({
         originalImage,
         editInstruction: editPrompt,
@@ -179,6 +181,7 @@ export function Step2Page() {
         backendUrl: BACKEND_URL,
         geminiApiKey,
       });
+      console.log('[Edit] 수정 완료, 이미지 교체');
       setGeneratedImages((prev) => ({
         ...prev,
         [editingIndex]: { data: result.dataUrl, prompt: editPrompt },
@@ -186,6 +189,7 @@ export function Step2Page() {
       setEditingIndex(null);
       setEditPrompt('');
     } catch (err) {
+      console.error('[Edit] 수정 실패:', err);
       setError(err instanceof Error ? err.message : '수정 실패');
     } finally {
       setIsEditing(false);
@@ -350,8 +354,22 @@ export function Step2Page() {
                       <div className="text-text-tertiary text-sm">대기중</div>
                     )}
                   </div>
-                  <div className="p-3">
+                  <div className="p-3 flex items-center justify-between">
                     <div className="text-xs text-text-secondary truncate">{i + 1}. {sectionName}</div>
+                    {img?.data && !img.error && (
+                      <button
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          const a = document.createElement('a');
+                          a.href = img.data;
+                          a.download = `${String(i + 1).padStart(2, '0')}_${section?.name || 'section'}.png`;
+                          a.click();
+                        }}
+                        className="text-xs text-accent-primary hover:underline shrink-0 ml-2"
+                      >
+                        저장
+                      </button>
+                    )}
                   </div>
                 </div>
               );
