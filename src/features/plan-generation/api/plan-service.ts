@@ -80,7 +80,7 @@ ${importedSectionTypes && importedSectionTypes.length >= 8 ? `
 
 사용자가 ${importedSectionTypes.length}개의 레퍼런스 폴더를 임포트했습니다.
 아래 섹션 타입 순서대로 정확히 ${importedSectionTypes.length}개 섹션을 생성하세요.
-기존의 "15개" 제한을 무시하고, 아래 목록을 그대로 따르세요.
+기존의 "13개" 제한을 무시하고, 아래 목록을 그대로 따르세요.
 
 ${importedSectionTypes.map((type, i) => `${i + 1}. [${type}] ${SECTION_TYPE_LABELS[type] || type}`).join('\n')}
 
@@ -91,7 +91,7 @@ ${importedSectionTypes.map((type, i) => `${i + 1}. [${type}] ${SECTION_TYPE_LABE
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
 레퍼런스 폴더에서 다음 섹션 타입이 임포트되었습니다: ${importedSectionTypes.join(', ')}
-이 타입들을 반드시 포함하되, 총 15개의 섹션을 생성하세요.
+이 타입들을 반드시 포함하되, 총 13개의 섹션을 생성하세요.
 ` : ''}
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 ## 절대 금지 규칙 (최우선 준수)
@@ -187,7 +187,7 @@ ${importedSectionTypes.map((type, i) => `${i + 1}. [${type}] ${SECTION_TYPE_LABE
   - ★★★ 100g당 400kcal 초과 제품: 칼로리를 POINT의 일부로 포함하는 것도 금지 ★★★
     "편리함", "적당한 양", "한 봉지" 같은 프레이밍으로 칼로리를 은근히 긍정화하지 마세요
     예: POINT 3 "편리한 한입 + 215kcal" ✗ → 칼로리는 POINT에서 완전히 배제하세요
-    칼로리 수치는 FAQ에서 중립적으로 "{칼로리}" 플레이스홀더로만 언급 가능
+    칼로리 수치는 spec에서 중립적으로 "{칼로리}" 플레이스홀더로만 언급 가능
   - ★ "부담스럽지 않아요", "부담 없이 즐기세요" 같은 간접적 칼로리 긍정화도 금지
     "한 번에 다 먹어도 부담스럽지 않아요" ✗ → 칼로리 관련 안심 프레이밍 자체를 하지 마세요
   - 1회 제공량 기준 단백질 5g 미만 → 단백질을 셀링포인트로 사용 금지, 언급 자체를 하지 마세요
@@ -220,8 +220,7 @@ ${importedSectionTypes.map((type, i) => `${i + 1}. [${type}] ${SECTION_TYPE_LABE
 아래 기준으로 선택 섹션 포함 여부를 판단하세요:
 
 A. 다양한 상황(소풍, 사무실, 캠핑 등)에서 사용 가능 → 상황 연출(situation) 포함
-C. 가격 앵커링이나 자주 묻는 질문이 필요 → FAQ(faq) 포함
-D. 초콜릿/소스/치즈 등 풍미/질감이 핵심인 제품 → 씨즐컷(sizzle) 포함
+C. 초콜릿/소스/치즈 등 풍미/질감이 핵심인 제품 → 씨즐컷(sizzle) 포함
 
 복수 선택 가능. 선택한 유형에 따라 아래 "선택적 섹션"을 페이지에 포함하세요.
 
@@ -232,27 +231,25 @@ D. 초콜릿/소스/치즈 등 풍미/질감이 핵심인 제품 → 씨즐컷(s
 - [신뢰/인증(trust)]: HACCP, 수상, 인증 등이 있는 경우 → POINT 뒤에 배치
 - [전환 브릿지(divider)]: 섹션 전환이 필요한 곳 → 중간 전환점에 배치
 - [상황 연출(situation)]: TPO가 다양한 제품 → 라이프스타일 뒤에 배치
-- [사용법/레시피(recipe)]: 조리법이나 활용법이 있는 경우 → situation 뒤에 배치
-- [FAQ(faq)]: 가격 앵커링이나 CS 질문이 필요한 경우 → CTA 직전에 배치
 - [제품 정보(spec)]: 법적 필수 고지사항 → 항상 마지막에 배치
 
 ${importedSectionTypes && importedSectionTypes.length >= 8
 ? `★ 레퍼런스 기반 배치 순서 (위의 "레퍼런스 기반 섹션 구성"을 따르세요) ★
 총 섹션 수: 정확히 ${importedSectionTypes.length}개 (레퍼런스 폴더 수에 맞춤)`
 : `★ 검증된 배치 순서 ★
-hero → empathy → point(3개) → sizzle → trust → divider → lifestyle → situation → recipe → review → faq → cta → spec = 정확히 15개
-${importedSectionTypes && importedSectionTypes.length > 0 ? `\n★ 레퍼런스 폴더가 ${importedSectionTypes.length}개 있습니다. 이 섹션 타입(${importedSectionTypes.join(', ')})을 반드시 포함하되, 나머지는 위 배치 순서에서 추가하여 총 15개로 구성하세요.` : ''}
-총 섹션 수: 정확히 15개를 생성하세요. 15개 미만은 절대 불가합니다.
-★★★ 반드시 15개의 [SECTION_START]...[SECTION_END] 블록을 출력하세요 ★★★`}
+hero → empathy → point(3개) → sizzle → trust → divider → lifestyle → situation → review → cta → spec = 정확히 13개
+${importedSectionTypes && importedSectionTypes.length > 0 ? `\n★ 레퍼런스 폴더가 ${importedSectionTypes.length}개 있습니다. 이 섹션 타입(${importedSectionTypes.join(', ')})을 반드시 포함하되, 나머지는 위 배치 순서에서 추가하여 총 13개로 구성하세요.` : ''}
+총 섹션 수: 정확히 13개를 생성하세요. 13개 미만은 절대 불가합니다.
+★★★ 반드시 13개의 [SECTION_START]...[SECTION_END] 블록을 출력하세요 ★★★`}
 각 섹션 = 1장의 AI 생성 이미지.
 
 ### STEP 1: 핵심 셀링 포인트 도출
 
 ★ POINT 수는 항상 3개 ★
-- 모든 제품: 3개 POINT (총 15개 섹션 구성에 맞춤)
+- 모든 제품: 3개 POINT (총 13개 섹션 구성에 맞춤)
 
 ★ POINT가 될 수 없는 것들 ★
-- 편의성, 휴대성, 용량, 포장, 크기 → 사용 시나리오 섹션이나 FAQ에서 처리
+- 편의성, 휴대성, 용량, 포장, 크기 → 사용 시나리오 섹션에서 처리
 - 만족감, 행복, 든든함 같은 추상적 감정 → 결과이지 셀링포인트가 아님
 - POINT는 "제품의 물리적·감각적·기능적 고유 특성"만 가능
 
@@ -350,8 +347,8 @@ ${importedSectionTypes && importedSectionTypes.length >= 8
 ? `★★★ 레퍼런스 기반 섹션 구조 (필수) ★★★
 위 "레퍼런스 기반 섹션 구성"에 명시된 ${importedSectionTypes.length}개 섹션을 순서대로 생성하세요.`
 : `★★★ 기본 설득 구조 (검증된 흐름) ★★★
-히어로 → 공감 → POINT(3개) → 씨즐컷 → 신뢰 → 구분선 → 라이프스타일 → 상황 연출 → 레시피 → 리뷰 → FAQ → CTA → 스펙 = 정확히 15개
-총 15개 섹션. 15개 미만 절대 불가.`}
+히어로 → 공감 → POINT(3개) → 씨즐컷 → 신뢰 → 구분선 → 라이프스타일 → 상황 연출 → 리뷰 → CTA → 스펙 = 정확히 13개
+총 13개 섹션. 13개 미만 절대 불가.`}
 
 ### [hero] 히어로 (필수, 1장)
 - 제품의 핵심 USP + 패키지 비주얼이 통합된 첫인상 이미지

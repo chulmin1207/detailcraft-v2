@@ -543,24 +543,24 @@ Step 1/2/3 또는 01/02/03 넘버링으로 단계별 안내
 
 // 섹션별 기본 비율 (auto 모드에서 레퍼런스 없을 때 fallback)
 export const SECTION_DEFAULT_RATIOS: Record<string, AspectRatio> = {
-  hero: 'auto',
-  empathy: 'auto',
-  situation: 'auto',
-  sizzle: 'auto',
-  point: 'auto',
-  lifestyle: 'auto',
-  divider: 'auto',
-  trust: 'auto',
-  review: 'auto',
-  bundle: 'auto',
-  flavor: 'auto',
-  closeup: 'auto',
-  lineup: 'auto',
-  'product-cut': 'auto',
-  cta: 'auto',
-  recipe: 'auto',
-  faq: 'auto',
-  spec: 'auto',
+  hero: '9:16',
+  empathy: '9:16',
+  situation: '9:16',
+  sizzle: '9:16',
+  point: '9:16',
+  lifestyle: '9:16',
+  divider: '9:16',
+  trust: '9:16',
+  review: '9:16',
+  bundle: '9:16',
+  flavor: '9:16',
+  closeup: '9:16',
+  lineup: '9:16',
+  'product-cut': '9:16',
+  cta: '9:16',
+  recipe: '9:16',
+  faq: '9:16',
+  spec: '9:16',
 };
 
 /**
@@ -616,7 +616,7 @@ export function resolveAutoRatio(
   }
 
   // 2. fallback: 섹션 타입별 기본 비율
-  return (sType && SECTION_DEFAULT_RATIOS[sType]) || '3:4';
+  return (sType && SECTION_DEFAULT_RATIOS[sType]) || '9:16';
 }
 
 // 섹션 번호 → 섹션 유형 기본 매핑 (sectionType이 없을 때 fallback)
