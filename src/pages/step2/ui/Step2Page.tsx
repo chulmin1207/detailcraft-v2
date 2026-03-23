@@ -56,6 +56,7 @@ export function Step2Page() {
           setGeneratedImages((prev) => ({ ...prev, [i]: { data: result.dataUrl, prompt: result.prompt } }));
         } catch (err) {
           const msg = err instanceof Error ? err.message : '생성 실패';
+          console.error(`[Track1] 섹션 ${i + 1} 이미지 생성 실패:`, msg);
           setGeneratedImages((prev) => ({ ...prev, [i]: { data: '', prompt: '', error: msg } }));
         }
         setGenerationProgress(5 + Math.round(((i + 1) / sections.length) * 95));
@@ -140,14 +141,15 @@ export function Step2Page() {
     URL.revokeObjectURL(url);
   }, [generatedImages, generatedSections, productName, selectedTrack]);
 
+  const imageEntries = Object.keys(generatedImages).length;
   const successCount = Object.values(generatedImages).filter((img) => img.data && !img.error).length;
-  const totalSections = selectedTrack === 'plan' ? generatedSections.length : FIXED_SECTIONS.length;
-  const hasResults = successCount > 0;
+  const totalSections = selectedTrack === 'plan' ? (generatedSections.length || FIXED_SECTIONS.length) : FIXED_SECTIONS.length;
+  const hasResults = imageEntries > 0 || (selectedTrack !== null && !isGenerating);
 
   return (
     <section className="max-w-5xl mx-auto">
       {/* 트랙 선택 (생성 시작 전) */}
-      {!isGenerating && !hasResults && (
+      {!isGenerating && !hasResults && !error && (
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
           <button
             onClick={() => handleStartGeneration('plan')}
@@ -199,9 +201,15 @@ export function Step2Page() {
       )}
 
       {/* 에러 */}
-      {error && (
-        <div className="bg-red-500/10 border border-red-500/30 rounded-xl p-4 mb-6 text-red-400 text-sm">
-          {error}
+      {error && !isGenerating && (
+        <div className="bg-red-500/10 border border-red-500/30 rounded-xl p-6 mb-6 text-center">
+          <div className="text-red-400 text-sm mb-4">{error}</div>
+          <button
+            onClick={() => { setError(null); setSelectedTrack(null); setGeneratedImages({}); }}
+            className="px-6 py-2 bg-bg-secondary border border-border-subtle rounded-xl text-sm text-text-primary hover:border-border-default"
+          >
+            다시 시도
+          </button>
         </div>
       )}
 
