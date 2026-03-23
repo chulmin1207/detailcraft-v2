@@ -12,10 +12,7 @@ export function Step2Page() {
   const { productName, productFeatures, selectedTrack, setSelectedTrack, generatedSections, setGeneratedSections } = useProductStore();
   const { uploadedImages, generatedImages, setGeneratedImages, useBackend, geminiApiKey, isGenerating, setIsGenerating, generationProgress, setGenerationProgress } = useImageStore();
 
-  const [logs, setLogs] = useState<string[]>([]);
   const [error, setError] = useState<string | null>(null);
-
-  const addLog = (msg: string) => setLogs((prev) => [...prev, `[${new Date().toLocaleTimeString()}] ${msg}`]);
 
   const productImage = uploadedImages.product[0] || '';
   const referenceImage = uploadedImages.references[0] || '';
@@ -26,24 +23,18 @@ export function Step2Page() {
     setGenerationProgress(0);
     setGeneratedImages({});
     setError(null);
-    setLogs([]);
 
     try {
-      // 1) Claude 기획
-      addLog('Claude 기획서 생성 중...');
       const prompt = buildPlanPrompt(productName, productFeatures);
       const response = await callClaudeForPlan(prompt, { useBackend, backendUrl: BACKEND_URL });
       const sections = parseSections(response);
       setGeneratedSections(sections);
-      addLog(`기획 완료: ${sections.length}개 섹션`);
+      setGenerationProgress(5);
 
-      // 2) Gemini 이미지 생성
       for (let i = 0; i < sections.length; i++) {
-        const section = sections[i];
-        addLog(`섹션 ${i + 1}: ${section.name} 생성 중...`);
         try {
           const result = await generateSectionImage({
-            section,
+            section: sections[i],
             index: i,
             totalSections: sections.length,
             modelConfig: MODEL_CONFIG,
@@ -57,16 +48,13 @@ export function Step2Page() {
             track: 'plan',
           });
           setGeneratedImages((prev) => ({ ...prev, [i]: { data: result.dataUrl, prompt: result.prompt } }));
-          addLog(`섹션 ${i + 1}: 완료`);
         } catch (err) {
           const msg = err instanceof Error ? err.message : '생성 실패';
-          addLog(`섹션 ${i + 1}: 실패 - ${msg}`);
           setGeneratedImages((prev) => ({ ...prev, [i]: { data: '', prompt: '', error: msg } }));
         }
-        setGenerationProgress(Math.round(((i + 1) / sections.length) * 100));
+        setGenerationProgress(5 + Math.round(((i + 1) / sections.length) * 95));
         if (i < sections.length - 1) await new Promise((r) => setTimeout(r, 2000));
       }
-      addLog('전체 생성 완료!');
     } catch (err) {
       setError(err instanceof Error ? err.message : '생성 실패');
     } finally {
@@ -74,22 +62,18 @@ export function Step2Page() {
     }
   }, [productName, productFeatures, productImage, referenceImage, useBackend, geminiApiKey, setIsGenerating, setGenerationProgress, setGeneratedImages, setGeneratedSections]);
 
-  // Track 2: 심플 Gemini 직행
+  // Track 2: 심플 직행
   const generateTrack2 = useCallback(async () => {
     setIsGenerating(true);
     setGenerationProgress(0);
     setGeneratedImages({});
     setError(null);
-    setLogs([]);
-    addLog('심플 모드 이미지 생성 시작');
 
     try {
       for (let i = 0; i < FIXED_SECTIONS.length; i++) {
-        const section = FIXED_SECTIONS[i];
-        addLog(`섹션 ${i + 1}: ${section.label} 생성 중...`);
         try {
           const result = await generateSectionImage({
-            section,
+            section: FIXED_SECTIONS[i],
             index: i,
             totalSections: FIXED_SECTIONS.length,
             modelConfig: MODEL_CONFIG,
@@ -103,16 +87,13 @@ export function Step2Page() {
             track: 'simple',
           });
           setGeneratedImages((prev) => ({ ...prev, [i]: { data: result.dataUrl, prompt: result.prompt } }));
-          addLog(`섹션 ${i + 1}: 완료`);
         } catch (err) {
           const msg = err instanceof Error ? err.message : '생성 실패';
-          addLog(`섹션 ${i + 1}: 실패 - ${msg}`);
           setGeneratedImages((prev) => ({ ...prev, [i]: { data: '', prompt: '', error: msg } }));
         }
         setGenerationProgress(Math.round(((i + 1) / FIXED_SECTIONS.length) * 100));
         if (i < FIXED_SECTIONS.length - 1) await new Promise((r) => setTimeout(r, 2000));
       }
-      addLog('전체 생성 완료!');
     } catch (err) {
       setError(err instanceof Error ? err.message : '생성 실패');
     } finally {
@@ -192,22 +173,22 @@ export function Step2Page() {
 
       {/* 생성 진행 상태 */}
       {isGenerating && (
-        <div className="bg-bg-secondary border border-border-subtle rounded-2xl p-6 mb-6">
-          <div className="flex items-center justify-between mb-3">
-            <h3 className="font-bold text-text-primary">이미지 생성 중...</h3>
-            <span className="text-accent-primary font-bold">{generationProgress}%</span>
+        <div className="bg-bg-secondary border border-border-subtle rounded-2xl p-8 mb-6">
+          <div className="text-center mb-6">
+            <div className="text-4xl mb-3 animate-pulse">🎨</div>
+            <h3 className="text-lg font-bold text-text-primary mb-1">상세페이지 생성 중</h3>
+            <p className="text-sm text-text-tertiary">잠시만 기다려주세요</p>
           </div>
-          <div className="w-full bg-bg-tertiary rounded-full h-3 mb-4">
+          <div className="w-full bg-bg-tertiary rounded-full h-4 mb-3">
             <div
-              className="bg-accent-primary h-3 rounded-full transition-all duration-500"
-              style={{ width: `${generationProgress}%` }}
+              className="h-4 rounded-full transition-all duration-700 ease-out"
+              style={{
+                width: `${generationProgress}%`,
+                background: 'linear-gradient(90deg, var(--accent-primary), #a78bfa)',
+              }}
             />
           </div>
-          <div className="bg-bg-primary rounded-xl p-4 max-h-48 overflow-y-auto text-xs text-text-secondary font-mono space-y-1">
-            {logs.map((log, i) => (
-              <div key={i}>{log}</div>
-            ))}
-          </div>
+          <div className="text-center text-accent-primary font-bold text-xl">{generationProgress}%</div>
         </div>
       )}
 
