@@ -37,7 +37,8 @@ export interface GeneratedImage {
 // ===== 업로드 이미지 =====
 export interface UploadedImages {
   product: string[];
-  references: string[];
+  references: string[];      // 레이아웃 레퍼런스 (섹션 구조 참고용, 최대 13장)
+  toneReferences: string[];  // 톤 레퍼런스 (색감/타이포 톤, 최대 3장)
 }
 
 // ===== 모델 설정 =====
@@ -77,7 +78,8 @@ export interface GenerateImageParams {
   totalSections: number;
   modelConfig: ModelConfig;
   productImage: string;
-  referenceImage: string;
+  referenceImage: string;      // 레이아웃 레퍼런스
+  toneReferenceImage: string;  // 톤 레퍼런스
   useBackend: boolean;
   backendUrl: string;
   geminiApiKey: string;

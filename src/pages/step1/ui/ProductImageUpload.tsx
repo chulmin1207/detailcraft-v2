@@ -1,7 +1,7 @@
 import { useCallback, useState, useEffect, useRef } from 'react';
 import { useImageStore } from '@/entities/image';
 
-type SlotType = 'product' | 'references';
+type SlotType = 'product' | 'references' | 'toneReferences';
 
 function useUploadZone(type: SlotType, max: number) {
   const { uploadedImages, setUploadedImages } = useImageStore();
@@ -32,7 +32,7 @@ function useUploadZone(type: SlotType, max: number) {
     const input = document.createElement('input');
     input.type = 'file';
     input.accept = 'image/*';
-    input.multiple = type === 'references';
+    input.multiple = type !== 'product';
     input.onchange = (e) => {
       const files = (e.target as HTMLInputElement).files;
       if (files) addImages(files);
@@ -137,7 +137,8 @@ function useUploadZone(type: SlotType, max: number) {
 
 export function ProductImageUpload() {
   const product = useUploadZone('product', 1);
-  const references = useUploadZone('references', 5);
+  const toneRefs = useUploadZone('toneReferences', 3);
+  const references = useUploadZone('references', 13);
 
   const zoneClass = (focused: boolean, dragOver: boolean) => [
     'border-2 border-dashed rounded-xl p-4 min-h-[200px] cursor-pointer transition-all duration-200 outline-none',
@@ -152,7 +153,7 @@ export function ProductImageUpload() {
     <div className="bg-bg-secondary border border-border-subtle rounded-2xl p-6 mb-6">
       <h2 className="text-lg font-bold text-text-primary mb-4">이미지 업로드</h2>
 
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
         {/* 제품 이미지 */}
         <div>
           <label className="block text-sm font-medium text-text-secondary mb-2">
@@ -191,10 +192,59 @@ export function ProductImageUpload() {
           </div>
         </div>
 
-        {/* 레퍼런스 이미지 */}
+        {/* 톤 레퍼런스 */}
         <div>
           <label className="block text-sm font-medium text-text-secondary mb-2">
-            톤앤매너 레퍼런스 (최대 5장)
+            톤 레퍼런스 (최대 3장)
+            <span className="block text-xs text-text-tertiary mt-0.5">배경색 · 타이포 색상 · 전체 톤</span>
+          </label>
+          <div
+            ref={toneRefs.zoneRef}
+            tabIndex={0}
+            onClick={toneRefs.handleClick}
+            onDragOver={toneRefs.handleDragOver}
+            onDragLeave={toneRefs.handleDragLeave}
+            onDrop={toneRefs.handleDrop}
+            className={zoneClass(toneRefs.focused, toneRefs.dragOver)}
+          >
+            {toneRefs.images.length > 0 ? (
+              <div className="grid grid-cols-3 gap-2">
+                {toneRefs.images.map((img, i) => (
+                  <div key={i} className="relative">
+                    <img src={img} alt={`tone-${i}`} className="w-full h-24 object-cover rounded-lg" />
+                    <button
+                      onClick={(e) => { e.stopPropagation(); toneRefs.handleRemove(i); }}
+                      className="absolute top-0.5 right-0.5 w-5 h-5 bg-red-500 text-white rounded-full text-[10px] flex items-center justify-center hover:bg-red-600"
+                    >
+                      ✕
+                    </button>
+                  </div>
+                ))}
+                {toneRefs.images.length < 3 && (
+                  <div className="w-full h-24 border border-dashed border-border-subtle rounded-lg flex items-center justify-center text-text-tertiary text-xl">
+                    +
+                  </div>
+                )}
+              </div>
+            ) : (
+              <div className="text-center text-text-tertiary flex flex-col items-center justify-center h-full">
+                <div className="text-3xl mb-2">🎨</div>
+                <div className="text-sm font-medium">톤/색감 레퍼런스</div>
+                <div className="text-xs mt-1.5 text-text-tertiary/70">
+                  {toneRefs.focused
+                    ? '붙여넣기 (Ctrl+V) 또는 클릭하여 파일 선택'
+                    : '클릭 · 드래그 · 붙여넣기'}
+                </div>
+              </div>
+            )}
+          </div>
+        </div>
+
+        {/* 레이아웃 레퍼런스 */}
+        <div>
+          <label className="block text-sm font-medium text-text-secondary mb-2">
+            레이아웃 레퍼런스 (최대 13장)
+            <span className="block text-xs text-text-tertiary mt-0.5">섹션 구조 · 정보 배치 참고</span>
           </label>
           <div
             ref={references.zoneRef}
@@ -218,7 +268,7 @@ export function ProductImageUpload() {
                     </button>
                   </div>
                 ))}
-                {references.images.length < 5 && (
+                {references.images.length < 13 && (
                   <div className="w-full h-24 border border-dashed border-border-subtle rounded-lg flex items-center justify-center text-text-tertiary text-xl">
                     +
                   </div>
@@ -226,8 +276,8 @@ export function ProductImageUpload() {
               </div>
             ) : (
               <div className="text-center text-text-tertiary flex flex-col items-center justify-center h-full">
-                <div className="text-3xl mb-2">🎨</div>
-                <div className="text-sm font-medium">참고 디자인 이미지</div>
+                <div className="text-3xl mb-2">📐</div>
+                <div className="text-sm font-medium">레이아웃 레퍼런스</div>
                 <div className="text-xs mt-1.5 text-text-tertiary/70">
                   {references.focused
                     ? '붙여넣기 (Ctrl+V) 또는 클릭하여 파일 선택'

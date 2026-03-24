@@ -104,15 +104,27 @@ export function base64ToBlob(base64: string): Blob {
 
 // ===== 시스템 프롬프트 =====
 function buildSystemPrompt(productName: string, productFeatures: string): string {
-  return `당신은 한국 이커머스 상세페이지 디자인 전문가입니다.
+  return `당신은 프리미엄 상세페이지 디자이너입니다.
+
+[디자인 원칙]
+1. 각 섹션에 사진/이미지는 최대 1~2장만 사용하세요. 이미지를 많이 넣지 마세요.
+2. 기본 구조: 텍스트(상단) → 이미지(중앙~하단)
+3. 이미지 외에는 그래픽 요소(아이콘, 배지, 라인, 도형 등)와 텍스트 디자인으로 채우세요
+4. 텍스트 디자인이 핵심: 굵은 헤드라인, 서브텍스트, 강조색, 배지 등으로 시각적 임팩트
+5. 여백을 충분히 활용하세요
+
+[레퍼런스 활용 규칙 — 75:25]
+- 톤 레퍼런스: 색감, 배경색, 타이포그래피 톤을 모든 섹션에 동일하게 적용
+- 레이아웃 레퍼런스: 레이아웃 구조와 정보 배치를 참고하되 세부 배치는 변주
+- 같은 디자이너가 다른 브랜드로 만든 느낌으로 — 구조 75% 유지 + 색상/세부 25% 변주
+- 레퍼런스를 그대로 복사하지 마세요
 
 [절대 규칙]
 1. 반드시 한국어 텍스트를 정확하게 렌더링하세요
-2. 레퍼런스 이미지의 디자인 톤, 색감, 타이포그래피 스타일을 기반으로 하되, 각 섹션마다 레이아웃을 변주하세요
-3. 제품 이미지의 패키지 디자인을 정확하게 반영하세요 — 색상, 형태, 텍스트 왜곡 없이
-4. 전체 상세페이지가 하나의 톤으로 자연스럽게 이어지도록 톤 & 무드를 일관되게 유지하세요
-5. 사람 얼굴 금지 — 손/팔까지만 허용
-6. 가짜 인증마크(HACCP, ISO 등), 허위 수치 생성 금지
+2. 제품 이미지의 패키지 디자인을 정확하게 반영하세요 — 색상, 형태, 텍스트 왜곡 없이
+3. 사람 얼굴 금지 — 손/팔까지만 허용
+4. 가짜 인증마크(HACCP, ISO 등), 허위 수치 생성 금지
+5. 제품에 실제 있는 정보만 사용하세요. 없는 정보를 지어내지 마세요.
 
 제품명: ${productName}${productFeatures ? `\n제품 특징: ${productFeatures}` : ''}`;
 }
@@ -128,6 +140,7 @@ export async function generateSectionImage(
     modelConfig,
     productImage,
     referenceImage,
+    toneReferenceImage,
     useBackend,
     backendUrl,
     geminiApiKey,
@@ -172,13 +185,23 @@ export async function generateSectionImage(
     });
   }
 
-  // 레퍼런스 이미지 (원본 그대로)
+  // 톤 레퍼런스 (색감/타이포 톤 — 전 섹션 동일 적용)
+  if (toneReferenceImage) {
+    parts.push({
+      inlineData: { mimeType: 'image/jpeg', data: safeExtractBase64(toneReferenceImage) },
+    });
+    parts.push({
+      text: '위는 톤/색감 레퍼런스입니다. 이 이미지의 배경색, 타이포그래피 색상, 전체적인 톤을 모든 섹션에 동일하게 적용하세요.',
+    });
+  }
+
+  // 레이아웃 레퍼런스 (구조/배치 참고 — 섹션별로 다를 수 있음)
   if (referenceImage) {
     parts.push({
       inlineData: { mimeType: 'image/jpeg', data: safeExtractBase64(referenceImage) },
     });
     parts.push({
-      text: '위는 레퍼런스 디자인입니다. 이 디자인의 톤, 색감, 스타일을 참고하되, 요청된 섹션에 맞게 레이아웃을 변주하세요.',
+      text: '위는 레이아웃 레퍼런스입니다. 이 디자인의 레이아웃 구조와 정보 배치를 참고하되, 색상/톤은 톤 레퍼런스를 따르세요. 같은 디자이너가 다른 브랜드로 만든 느낌으로 자연스럽게 변주하세요.',
     });
   }
 

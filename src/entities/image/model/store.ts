@@ -33,7 +33,7 @@ export const useImageStore = create<ImageState>()(
         set({ geminiApiKey: key });
       },
 
-      uploadedImages: { product: [], references: [] },
+      uploadedImages: { product: [], references: [], toneReferences: [] },
       setUploadedImages: (images) =>
         set((state) => ({
           uploadedImages: typeof images === 'function' ? images(state.uploadedImages) : images,

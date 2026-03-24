@@ -19,6 +19,7 @@ export function Step2Page() {
 
   const productImage = uploadedImages.product[0] || '';
   const referenceImage = uploadedImages.references[0] || '';
+  const toneReferenceImage = uploadedImages.toneReferences?.[0] || '';
 
   // Track 1: Claude 기획 → Gemini 이미지
   const generateTrack1 = useCallback(async () => {
@@ -49,6 +50,7 @@ export function Step2Page() {
             modelConfig: MODEL_CONFIG,
             productImage,
             referenceImage,
+            toneReferenceImage,
             useBackend,
             backendUrl: BACKEND_URL,
             geminiApiKey,
@@ -70,7 +72,7 @@ export function Step2Page() {
     } finally {
       setIsGenerating(false);
     }
-  }, [productName, productFeatures, productImage, referenceImage, useBackend, geminiApiKey, setIsGenerating, setGenerationProgress, setGeneratedImages, setGeneratedSections]);
+  }, [productName, productFeatures, productImage, referenceImage, toneReferenceImage, useBackend, geminiApiKey, setIsGenerating, setGenerationProgress, setGeneratedImages, setGeneratedSections]);
 
   // Track 2: 심플 직행
   const generateTrack2 = useCallback(async () => {
@@ -89,6 +91,7 @@ export function Step2Page() {
             modelConfig: MODEL_CONFIG,
             productImage,
             referenceImage,
+            toneReferenceImage,
             useBackend,
             backendUrl: BACKEND_URL,
             geminiApiKey,
@@ -109,7 +112,7 @@ export function Step2Page() {
     } finally {
       setIsGenerating(false);
     }
-  }, [productName, productFeatures, productImage, referenceImage, useBackend, geminiApiKey, setIsGenerating, setGenerationProgress, setGeneratedImages]);
+  }, [productName, productFeatures, productImage, referenceImage, toneReferenceImage, useBackend, geminiApiKey, setIsGenerating, setGenerationProgress, setGeneratedImages]);
 
   const handleStartGeneration = (track: GenerationTrack) => {
     setSelectedTrack(track);
@@ -140,6 +143,7 @@ export function Step2Page() {
             modelConfig: MODEL_CONFIG,
             productImage,
             referenceImage,
+            toneReferenceImage,
             useBackend,
             backendUrl: BACKEND_URL,
             geminiApiKey,
@@ -161,7 +165,7 @@ export function Step2Page() {
     } finally {
       setIsGenerating(false);
     }
-  }, [selectedTrack, generatedSections, productImage, referenceImage, useBackend, geminiApiKey, productName, productFeatures, setIsGenerating, setGenerationProgress, setGeneratedImages]);
+  }, [selectedTrack, generatedSections, productImage, referenceImage, toneReferenceImage, useBackend, geminiApiKey, productName, productFeatures, setIsGenerating, setGenerationProgress, setGeneratedImages]);
 
   // 개별 이미지 수정
   const handleEditImage = useCallback(async () => {
