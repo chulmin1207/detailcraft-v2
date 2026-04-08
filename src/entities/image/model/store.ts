@@ -1,7 +1,9 @@
 import { create } from 'zustand';
-import type { GeneratedImage, UploadedImages } from '@/shared/types';
+import type { GeneratedImage, UploadedImages, ProductInfoJson } from '@/shared/types';
 
 const LS_GEMINI_KEY = 'detailcraft_gemini_key';
+
+export type Step2Phase = 'select' | 'plan' | 'config' | 'generating' | 'results';
 
 interface ImageState {
   // API
@@ -26,6 +28,18 @@ interface ImageState {
   generationProgress: number;
   setIsGenerating: (v: boolean) => void;
   setGenerationProgress: (v: number) => void;
+
+  // Step2 phase (스텝 이동 시 유지)
+  step2Phase: Step2Phase;
+  setStep2Phase: (v: Step2Phase) => void;
+
+  // 섹션별 레퍼런스 (스텝 이동 시 유지)
+  sectionRefs: Record<number, string>;
+  setSectionRefs: (refs: Record<number, string> | ((prev: Record<number, string>) => Record<number, string>)) => void;
+
+  // 제품 정보 JSON (스텝 이동 시 유지)
+  productInfoJson: ProductInfoJson | null;
+  setProductInfoJson: (v: ProductInfoJson | null) => void;
 }
 
 export const useImageStore = create<ImageState>()(
@@ -56,5 +70,17 @@ export const useImageStore = create<ImageState>()(
       generationProgress: 0,
       setIsGenerating: (v) => set({ isGenerating: v }),
       setGenerationProgress: (v) => set({ generationProgress: v }),
+
+      step2Phase: 'select',
+      setStep2Phase: (v) => set({ step2Phase: v }),
+
+      sectionRefs: {},
+      setSectionRefs: (refs) =>
+        set((state) => ({
+          sectionRefs: typeof refs === 'function' ? refs(state.sectionRefs) : refs,
+        })),
+
+      productInfoJson: null,
+      setProductInfoJson: (v) => set({ productInfoJson: v }),
     })
 );

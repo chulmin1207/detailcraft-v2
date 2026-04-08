@@ -1,4 +1,4 @@
-import { useState, useCallback } from 'react';
+import { useState, useCallback, useEffect, useRef } from 'react';
 import { useProductStore } from '@/entities/product';
 import { useImageStore } from '@/entities/image';
 import { generateSectionImage, editSectionImage, compressImageForAPI } from '@/features/image-generation';
@@ -8,27 +8,55 @@ import { MODEL_CONFIG, BACKEND_URL, PLATFORM_CONFIGS } from '@/shared/config/con
 import type { GenerationTrack, ProductInfoJson, Section } from '@/shared/types';
 import { resizeImage, base64ToBlob } from '@/features/image-generation';
 
-type Phase = 'select' | 'plan' | 'config' | 'generating' | 'results';
-
 const ASPECT_RATIO_OPTIONS = ['1:1', '1:4', '1:8', '3:2', '3:4'] as const;
 
 export function Step2Page() {
   const { productName, productFeatures, selectedTrack, setSelectedTrack, generatedSections, setGeneratedSections } = useProductStore();
-  const { uploadedImages, generatedImages, setGeneratedImages, useBackend, geminiApiKey, isGenerating, setIsGenerating, generationProgress, setGenerationProgress, aspectRatio, setAspectRatio } = useImageStore();
+  const {
+    uploadedImages, generatedImages, setGeneratedImages, useBackend, geminiApiKey, isGenerating, setIsGenerating, generationProgress, setGenerationProgress, aspectRatio, setAspectRatio,
+    step2Phase: phase, setStep2Phase: setPhase,
+    sectionRefs, setSectionRefs,
+    productInfoJson, setProductInfoJson,
+  } = useImageStore();
 
   const [error, setError] = useState<string | null>(null);
   const [editingIndex, setEditingIndex] = useState<number | null>(null);
   const [editPrompt, setEditPrompt] = useState('');
   const [isEditing, setIsEditing] = useState(false);
 
-  // New phase-based state
-  const [phase, setPhase] = useState<Phase>('select');
-  const [sectionRefs, setSectionRefs] = useState<Record<number, string>>({});
-  const [productInfoJson, setProductInfoJson] = useState<ProductInfoJson | null>(null);
+  // Paste mode state for section reference upload
+  const [pasteActiveIndex, setPasteActiveIndex] = useState<number | null>(null);
+  const fileInputRefs = useRef<Record<number, HTMLInputElement | null>>({});
 
   const productImage = uploadedImages.product[0] || '';
   const referenceImages = uploadedImages.references || [];
-  const toneReferenceImages = uploadedImages.toneReferences || [];
+  // 톤 레퍼런스는 Step 1에서 제거됨 — 빈 배열로 처리
+  const toneReferenceImages: string[] = [];
+
+  // Paste event listener for section reference upload
+  useEffect(() => {
+    if (pasteActiveIndex === null) return;
+    const handler = (e: ClipboardEvent) => {
+      const items = e.clipboardData?.items;
+      if (!items) return;
+      for (const item of items) {
+        if (item.type.startsWith('image/')) {
+          const file = item.getAsFile();
+          if (file) {
+            const reader = new FileReader();
+            reader.onload = () => {
+              setSectionRefs((prev) => ({ ...prev, [pasteActiveIndex]: reader.result as string }));
+              setPasteActiveIndex(null);
+            };
+            reader.readAsDataURL(file);
+          }
+          break;
+        }
+      }
+    };
+    document.addEventListener('paste', handler);
+    return () => document.removeEventListener('paste', handler);
+  }, [pasteActiveIndex, setSectionRefs]);
 
   // Phase 1: Claude plan generation only (no images)
   const generatePlan = useCallback(async () => {
@@ -65,7 +93,7 @@ export function Step2Page() {
       setError(err instanceof Error ? err.message : '기획 생성 실패');
       setPhase('select');
     }
-  }, [productName, productFeatures, productImage, referenceImages, toneReferenceImages, useBackend, setGeneratedSections]);
+  }, [productName, productFeatures, productImage, referenceImages, toneReferenceImages, useBackend, setGeneratedSections, setPhase, setSectionRefs, setProductInfoJson]);
 
   // Track selection handler
   const handleTrackSelect = (track: GenerationTrack) => {
@@ -136,7 +164,7 @@ export function Step2Page() {
     } finally {
       setIsGenerating(false);
     }
-  }, [selectedTrack, generatedSections, sectionRefs, referenceImages, toneReferenceImages, productImage, useBackend, geminiApiKey, aspectRatio, productName, productFeatures, productInfoJson, setIsGenerating, setGenerationProgress, setGeneratedImages]);
+  }, [selectedTrack, generatedSections, sectionRefs, referenceImages, toneReferenceImages, productImage, useBackend, geminiApiKey, aspectRatio, productName, productFeatures, productInfoJson, setIsGenerating, setGenerationProgress, setGeneratedImages, setPhase]);
 
   // Retry image generation (keeps plan, goes back to generating)
   const retryImageGeneration = useCallback(async () => {
@@ -357,10 +385,34 @@ export function Step2Page() {
                         </button>
                       </div>
                     ) : (
-                      <label className="w-24 h-24 border-2 border-dashed border-border-subtle rounded-lg flex flex-col items-center justify-center cursor-pointer hover:border-accent-primary transition-colors bg-bg-tertiary">
-                        <span className="text-text-tertiary text-lg mb-0.5">+</span>
-                        <span className="text-[10px] text-text-tertiary">레퍼런스</span>
+                      <div
+                        onClick={() => {
+                          if (pasteActiveIndex === i) {
+                            // Second click: open file dialog
+                            fileInputRefs.current[i]?.click();
+                          } else {
+                            // First click: activate paste mode
+                            setPasteActiveIndex(i);
+                          }
+                        }}
+                        className={`w-24 h-24 border-2 border-dashed rounded-lg flex flex-col items-center justify-center cursor-pointer transition-colors bg-bg-tertiary ${
+                          pasteActiveIndex === i
+                            ? 'border-accent-primary bg-accent-primary/5'
+                            : 'border-border-subtle hover:border-accent-primary'
+                        }`}
+                      >
+                        {pasteActiveIndex === i ? (
+                          <>
+                            <span className="text-accent-primary text-[10px] text-center px-1">붙여넣기 대기중<br/>클릭시 파일열기</span>
+                          </>
+                        ) : (
+                          <>
+                            <span className="text-text-tertiary text-lg mb-0.5">+</span>
+                            <span className="text-[10px] text-text-tertiary">레퍼런스</span>
+                          </>
+                        )}
                         <input
+                          ref={(el) => { fileInputRefs.current[i] = el; }}
                           type="file"
                           accept="image/*"
                           className="hidden"
@@ -369,13 +421,15 @@ export function Step2Page() {
                             if (file) {
                               const reader = new FileReader();
                               reader.onload = () => {
-                                setSectionRefs(prev => ({ ...prev, [i]: reader.result as string }));
+                                setSectionRefs((prev) => ({ ...prev, [i]: reader.result as string }));
+                                setPasteActiveIndex(null);
                               };
                               reader.readAsDataURL(file);
                             }
+                            e.target.value = '';
                           }}
                         />
-                      </label>
+                      </div>
                     )}
                   </div>
                 </div>

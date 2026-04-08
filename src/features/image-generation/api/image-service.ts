@@ -149,13 +149,12 @@ export async function generateSectionImage(
     const pi = productInfoJson;
 
     // 영문 프롬프트 조합 (JSON 기반)
+    // fromReference는 제거 — Gemini가 첨부된 레퍼런스 이미지를 직접 보고 구도/앵글/조명 판단
+    // adaptedForProduct만 텍스트로 전달 — 제품에 맞는 배경색, 소품, 톤
     prompt = `Based on the provided reference images. Professional product photography of ${pi?.name || productName}.
 
-Composition: ${pj.fromReference.composition}
-Camera angle: ${pj.fromReference.cameraAngle}
-Lighting: ${pj.fromReference.lighting}
-Product occupancy: ${pj.fromReference.productOccupancy}
-Negative space: ${pj.fromReference.negativeSpace}
+Follow the reference image's composition, camera angle, lighting, and layout structure.
+Adapt the visual elements to match this product:
 
 Background: ${pj.adaptedForProduct.backgroundColor}
 Props: ${pj.adaptedForProduct.props.join(', ') || 'none'}
