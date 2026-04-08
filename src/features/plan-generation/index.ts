@@ -1,1 +1,1 @@
-export { buildPlanPrompt, callClaudeForPlan, parseSections } from './api/plan-service';
+export { buildPlanPrompt, callClaudeForPlan, parseSections, parseProductJson } from './api/plan-service';

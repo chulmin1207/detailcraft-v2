@@ -274,19 +274,28 @@ Ultra high resolution, commercial quality.`;
   }
 
   const data = await response.json();
+  console.log('[Gemini Response]', JSON.stringify(data).slice(0, 500));
+
   const candidates = (data as {
     candidates?: Array<{
-      content?: { parts?: Array<{ inlineData?: { mimeType?: string; data?: string } }> };
+      content?: { parts?: Array<{ text?: string; inlineData?: { mimeType?: string; data?: string } }> };
+      finishReason?: string;
     }>;
   }).candidates || [];
 
   for (const candidate of candidates) {
+    if (candidate.finishReason && candidate.finishReason !== 'STOP') {
+      console.warn('[Gemini] finishReason:', candidate.finishReason);
+    }
     for (const part of (candidate.content?.parts || [])) {
       if (part.inlineData?.mimeType?.startsWith('image/')) {
         return {
           dataUrl: `data:${part.inlineData.mimeType};base64,${part.inlineData.data}`,
           prompt,
         };
+      }
+      if (part.text) {
+        console.log('[Gemini Text]', part.text.slice(0, 200));
       }
     }
   }
