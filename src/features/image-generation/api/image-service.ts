@@ -104,27 +104,16 @@ export function base64ToBlob(base64: string): Blob {
 
 // ===== 시스템 프롬프트 =====
 function buildSystemPrompt(productName: string, productFeatures: string): string {
-  return `당신은 프리미엄 상세페이지 디자이너입니다.
+  return `당신은 이커머스 상세페이지 이미지 전문가입니다.
 
-[디자인 원칙]
-1. 각 섹션에 사진/이미지는 최대 1~2장만 사용하세요. 이미지를 많이 넣지 마세요.
-2. 기본 구조: 텍스트(상단) → 이미지(중앙~하단)
-3. 이미지 외에는 그래픽 요소(아이콘, 배지, 라인, 도형 등)와 텍스트 디자인으로 채우세요
-4. 텍스트 디자인이 핵심: 굵은 헤드라인, 서브텍스트, 강조색, 배지 등으로 시각적 임팩트
-5. 여백을 충분히 활용하세요
-
-[레퍼런스 활용 규칙 — 75:25]
-- 톤 레퍼런스: 색감, 배경색, 타이포그래피 톤을 모든 섹션에 동일하게 적용
-- 레이아웃 레퍼런스: 레이아웃 구조와 정보 배치를 참고하되 세부 배치는 변주
-- 같은 디자이너가 다른 브랜드로 만든 느낌으로 — 구조 75% 유지 + 색상/세부 25% 변주
-- 레퍼런스를 그대로 복사하지 마세요
-
-[절대 규칙]
-1. 반드시 한국어 텍스트를 정확하게 렌더링하세요
-2. 제품 이미지의 패키지 디자인을 정확하게 반영하세요 — 색상, 형태, 텍스트 왜곡 없이
-3. 사람 얼굴 금지 — 손/팔까지만 허용
-4. 가짜 인증마크(HACCP, ISO 등), 허위 수치 생성 금지
-5. 제품에 실제 있는 정보만 사용하세요. 없는 정보를 지어내지 마세요.
+[핵심 규칙]
+1. 텍스트/글자를 이미지에 절대 넣지 마세요. 순수 비주얼 이미지만 생성하세요. 헤드라인, 서브카피, 라벨, 숫자, 뱃지 텍스트 등 모든 문자를 제외하세요.
+2. 레퍼런스 이미지의 톤, 색감, 분위기를 기반으로 하되 레이아웃을 변주하세요
+3. 제품 이미지의 패키지를 정확히 반영 — 색상, 형태 왜곡 없이
+4. 전체 톤 & 무드를 일관되게 유지하세요
+5. 사람 얼굴 금지 — 손/팔까지만 허용
+6. 가짜 인증마크, 허위 수치 금지
+7. 실사 사진 스타일만. 일러스트, 카툰, 클립아트 금지
 
 제품명: ${productName}${productFeatures ? `\n제품 특징: ${productFeatures}` : ''}`;
 }
@@ -139,14 +128,15 @@ export async function generateSectionImage(
     totalSections,
     modelConfig,
     productImage,
-    referenceImage,
-    toneReferenceImage,
+    referenceImages,
+    toneReferenceImages,
     useBackend,
     backendUrl,
     geminiApiKey,
     productName,
     productFeatures,
     track,
+    aspectRatio,
   } = params;
 
   const systemPrompt = buildSystemPrompt(productName, productFeatures);
@@ -185,23 +175,29 @@ export async function generateSectionImage(
     });
   }
 
-  // 톤 레퍼런스 (색감/타이포 톤 — 전 섹션 동일 적용)
-  if (toneReferenceImage) {
+  // 톤 레퍼런스 (색감/타이포 톤 — 전 섹션 동일 적용, 복수 지원)
+  const validToneRefs = toneReferenceImages.filter(Boolean);
+  if (validToneRefs.length > 0) {
+    for (const toneRef of validToneRefs) {
+      parts.push({
+        inlineData: { mimeType: 'image/jpeg', data: safeExtractBase64(toneRef) },
+      });
+    }
     parts.push({
-      inlineData: { mimeType: 'image/jpeg', data: safeExtractBase64(toneReferenceImage) },
-    });
-    parts.push({
-      text: '위는 톤/색감 레퍼런스입니다. 이 이미지의 배경색, 타이포그래피 색상, 전체적인 톤을 모든 섹션에 동일하게 적용하세요.',
+      text: `위 ${validToneRefs.length}장은 톤/색감 레퍼런스입니다. 이 이미지들의 배경색, 타이포그래피 색상, 전체적인 톤을 종합적으로 참고하여 모든 섹션에 동일하게 적용하세요.`,
     });
   }
 
-  // 레이아웃 레퍼런스 (구조/배치 참고 — 섹션별로 다를 수 있음)
-  if (referenceImage) {
+  // 레이아웃 레퍼런스 (구조/배치 참고, 복수 지원)
+  const validLayoutRefs = referenceImages.filter(Boolean);
+  if (validLayoutRefs.length > 0) {
+    for (const layoutRef of validLayoutRefs) {
+      parts.push({
+        inlineData: { mimeType: 'image/jpeg', data: safeExtractBase64(layoutRef) },
+      });
+    }
     parts.push({
-      inlineData: { mimeType: 'image/jpeg', data: safeExtractBase64(referenceImage) },
-    });
-    parts.push({
-      text: '위는 레이아웃 레퍼런스입니다. 이 디자인의 레이아웃 구조와 정보 배치를 참고하되, 색상/톤은 톤 레퍼런스를 따르세요. 같은 디자이너가 다른 브랜드로 만든 느낌으로 자연스럽게 변주하세요.',
+      text: `위 ${validLayoutRefs.length}장은 레이아웃 레퍼런스입니다. 현재 섹션의 내용에 가장 유사한 구도를 가진 1~2장을 골라 레이아웃 구조, 여백, 정보 배치 방식을 참고하세요. 색상/톤은 톤 레퍼런스를 따르세요.`,
     });
   }
 
@@ -224,7 +220,7 @@ export async function generateSectionImage(
       responseModalities: ['TEXT', 'IMAGE'],
       imageConfig: {
         ...(modelConfig.config.imageConfig as Record<string, unknown>),
-        aspectRatio: '9:16',
+        aspectRatio: aspectRatio || '3:4',
       },
     },
   };
@@ -315,7 +311,7 @@ ${editInstruction}`,
       responseModalities: ['TEXT', 'IMAGE'],
       imageConfig: {
         ...(modelConfig.config.imageConfig as Record<string, unknown>),
-        aspectRatio: '9:16',
+        aspectRatio: aspectRatio || '3:4',
       },
     },
   };

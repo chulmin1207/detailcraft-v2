@@ -3,9 +3,11 @@ import { useImageStore } from '@/entities/image';
 import { ProductForm } from './ProductForm';
 import { ProductImageUpload } from './ProductImageUpload';
 
+const ASPECT_RATIOS = ['1:1', '1:4', '1:8', '3:2', '3:4'] as const;
+
 export function Step1Page() {
   const { productName, goToStep } = useProductStore();
-  const { uploadedImages } = useImageStore();
+  const { uploadedImages, aspectRatio, setAspectRatio } = useImageStore();
 
   const canContinue = productName.trim().length > 0 && uploadedImages.product.length > 0;
 
@@ -13,6 +15,27 @@ export function Step1Page() {
     <section className="max-w-3xl mx-auto">
       <ProductForm />
       <ProductImageUpload />
+
+      {/* 화면비 선택 */}
+      <div className="bg-bg-secondary border border-border-subtle rounded-2xl p-6 mt-6">
+        <h3 className="text-sm font-bold text-text-primary mb-3">화면비</h3>
+        <div className="flex gap-2">
+          {ASPECT_RATIOS.map((ratio) => (
+            <button
+              key={ratio}
+              type="button"
+              onClick={() => setAspectRatio(ratio)}
+              className={`px-4 py-2 rounded-xl text-sm font-medium transition-all ${
+                aspectRatio === ratio
+                  ? 'bg-accent-primary text-white'
+                  : 'bg-bg-tertiary text-text-secondary hover:border-border-default'
+              }`}
+            >
+              {ratio}
+            </button>
+          ))}
+        </div>
+      </div>
 
       <div className="text-center mt-6">
         <button

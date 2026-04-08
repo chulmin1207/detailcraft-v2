@@ -78,12 +78,13 @@ export interface GenerateImageParams {
   totalSections: number;
   modelConfig: ModelConfig;
   productImage: string;
-  referenceImage: string;      // 레이아웃 레퍼런스
-  toneReferenceImage: string;  // 톤 레퍼런스
+  referenceImages: string[];      // 레이아웃 레퍼런스 (복수)
+  toneReferenceImages: string[];  // 톤 레퍼런스 (복수)
   useBackend: boolean;
   backendUrl: string;
   geminiApiKey: string;
   productName: string;
   productFeatures: string;
   track: GenerationTrack;
+  aspectRatio: string;
 }

@@ -10,7 +10,7 @@ import { resizeImage, base64ToBlob } from '@/features/image-generation';
 
 export function Step2Page() {
   const { productName, productFeatures, selectedTrack, setSelectedTrack, generatedSections, setGeneratedSections } = useProductStore();
-  const { uploadedImages, generatedImages, setGeneratedImages, useBackend, geminiApiKey, isGenerating, setIsGenerating, generationProgress, setGenerationProgress } = useImageStore();
+  const { uploadedImages, generatedImages, setGeneratedImages, useBackend, geminiApiKey, isGenerating, setIsGenerating, generationProgress, setGenerationProgress, aspectRatio } = useImageStore();
 
   const [error, setError] = useState<string | null>(null);
   const [editingIndex, setEditingIndex] = useState<number | null>(null);
@@ -18,8 +18,8 @@ export function Step2Page() {
   const [isEditing, setIsEditing] = useState(false);
 
   const productImage = uploadedImages.product[0] || '';
-  const referenceImage = uploadedImages.references[0] || '';
-  const toneReferenceImage = uploadedImages.toneReferences?.[0] || '';
+  const referenceImages = uploadedImages.references || [];
+  const toneReferenceImages = uploadedImages.toneReferences || [];
 
   // Track 1: Claude 기획 → Gemini 이미지
   const generateTrack1 = useCallback(async () => {
@@ -49,14 +49,15 @@ export function Step2Page() {
             totalSections: sections.length,
             modelConfig: MODEL_CONFIG,
             productImage,
-            referenceImage,
-            toneReferenceImage,
+            referenceImages,
+            toneReferenceImages,
             useBackend,
             backendUrl: BACKEND_URL,
             geminiApiKey,
             productName,
             productFeatures,
             track: 'plan',
+            aspectRatio,
           });
           setGeneratedImages((prev) => ({ ...prev, [i]: { data: result.dataUrl, prompt: result.prompt } }));
         } catch (err) {
@@ -72,7 +73,7 @@ export function Step2Page() {
     } finally {
       setIsGenerating(false);
     }
-  }, [productName, productFeatures, productImage, referenceImage, toneReferenceImage, useBackend, geminiApiKey, setIsGenerating, setGenerationProgress, setGeneratedImages, setGeneratedSections]);
+  }, [productName, productFeatures, productImage, referenceImages, toneReferenceImages, useBackend, geminiApiKey, aspectRatio, setIsGenerating, setGenerationProgress, setGeneratedImages, setGeneratedSections]);
 
   // Track 2: 심플 직행
   const generateTrack2 = useCallback(async () => {
@@ -90,14 +91,15 @@ export function Step2Page() {
             totalSections: FIXED_SECTIONS.length,
             modelConfig: MODEL_CONFIG,
             productImage,
-            referenceImage,
-            toneReferenceImage,
+            referenceImages,
+            toneReferenceImages,
             useBackend,
             backendUrl: BACKEND_URL,
             geminiApiKey,
             productName,
             productFeatures,
             track: 'simple',
+            aspectRatio,
           });
           setGeneratedImages((prev) => ({ ...prev, [i]: { data: result.dataUrl, prompt: result.prompt } }));
         } catch (err) {
@@ -112,7 +114,7 @@ export function Step2Page() {
     } finally {
       setIsGenerating(false);
     }
-  }, [productName, productFeatures, productImage, referenceImage, toneReferenceImage, useBackend, geminiApiKey, setIsGenerating, setGenerationProgress, setGeneratedImages]);
+  }, [productName, productFeatures, productImage, referenceImages, toneReferenceImages, useBackend, geminiApiKey, aspectRatio, setIsGenerating, setGenerationProgress, setGeneratedImages]);
 
   const handleStartGeneration = (track: GenerationTrack) => {
     setSelectedTrack(track);
@@ -142,14 +144,15 @@ export function Step2Page() {
             totalSections: sections.length,
             modelConfig: MODEL_CONFIG,
             productImage,
-            referenceImage,
-            toneReferenceImage,
+            referenceImages,
+            toneReferenceImages,
             useBackend,
             backendUrl: BACKEND_URL,
             geminiApiKey,
             productName,
             productFeatures,
             track,
+            aspectRatio,
           });
           setGeneratedImages((prev) => ({ ...prev, [i]: { data: result.dataUrl, prompt: result.prompt } }));
         } catch (err) {
@@ -165,7 +168,7 @@ export function Step2Page() {
     } finally {
       setIsGenerating(false);
     }
-  }, [selectedTrack, generatedSections, productImage, referenceImage, toneReferenceImage, useBackend, geminiApiKey, productName, productFeatures, setIsGenerating, setGenerationProgress, setGeneratedImages]);
+  }, [selectedTrack, generatedSections, productImage, referenceImages, toneReferenceImages, useBackend, geminiApiKey, aspectRatio, productName, productFeatures, setIsGenerating, setGenerationProgress, setGeneratedImages]);
 
   // 개별 이미지 수정
   const handleEditImage = useCallback(async () => {

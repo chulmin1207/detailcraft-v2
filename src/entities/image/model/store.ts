@@ -17,6 +17,10 @@ interface ImageState {
   generatedImages: Record<number, GeneratedImage>;
   setGeneratedImages: (images: Record<number, GeneratedImage> | ((prev: Record<number, GeneratedImage>) => Record<number, GeneratedImage>)) => void;
 
+  // 화면비
+  aspectRatio: string;
+  setAspectRatio: (v: string) => void;
+
   // 생성 진행상태
   isGenerating: boolean;
   generationProgress: number;
@@ -38,6 +42,9 @@ export const useImageStore = create<ImageState>()(
         set((state) => ({
           uploadedImages: typeof images === 'function' ? images(state.uploadedImages) : images,
         })),
+
+      aspectRatio: '3:4',
+      setAspectRatio: (v) => set({ aspectRatio: v }),
 
       generatedImages: {},
       setGeneratedImages: (images) =>
