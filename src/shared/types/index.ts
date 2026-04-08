@@ -9,6 +9,36 @@ export type SectionType =
   | 'hero' | 'empathy' | 'point' | 'sizzle' | 'trust'
   | 'divider' | 'lifestyle' | 'situation' | 'review' | 'cta' | 'spec';
 
+// ===== 이미지 생성용 JSON 프롬프트 (영문, Gemini 전달용) =====
+export interface SectionPromptJson {
+  fromReference: {
+    composition: string;
+    cameraAngle: string;
+    lighting: string;
+    productOccupancy: string;
+    negativeSpace: string;
+  };
+  adaptedForProduct: {
+    backgroundColor: string;
+    props: string[];
+    toneMood: string;
+    colorPalette: string;
+  };
+  scaleRules: string;
+  packageIntegrity: string;
+  frontMarkings: string;
+  additionalDirections: string;
+}
+
+// ===== 제품 정보 (전역, 영문) =====
+export interface ProductInfoJson {
+  name: string;
+  packageType: string;
+  packageSize: string;
+  frontMarkings: string;
+  components: string[];
+}
+
 // ===== 섹션 =====
 export interface Section {
   number: number;
@@ -17,6 +47,7 @@ export interface Section {
   headline: string;
   subCopy: string;
   visualPrompt: string;
+  promptJson?: SectionPromptJson;  // Gemini 전달용 영문 JSON
 }
 
 // ===== 고정 섹션 정의 =====
@@ -37,8 +68,8 @@ export interface GeneratedImage {
 // ===== 업로드 이미지 =====
 export interface UploadedImages {
   product: string[];
-  references: string[];      // 레이아웃 레퍼런스 (섹션 구조 참고용, 최대 13장)
-  toneReferences: string[];  // 톤 레퍼런스 (색감/타이포 톤, 최대 3장)
+  references: string[];
+  toneReferences: string[];
 }
 
 // ===== 모델 설정 =====
@@ -78,8 +109,8 @@ export interface GenerateImageParams {
   totalSections: number;
   modelConfig: ModelConfig;
   productImage: string;
-  referenceImages: string[];      // 레이아웃 레퍼런스 (복수)
-  toneReferenceImages: string[];  // 톤 레퍼런스 (복수)
+  referenceImages: string[];
+  toneReferenceImages: string[];
   useBackend: boolean;
   backendUrl: string;
   geminiApiKey: string;
@@ -87,4 +118,5 @@ export interface GenerateImageParams {
   productFeatures: string;
   track: GenerationTrack;
   aspectRatio: string;
+  productInfoJson?: ProductInfoJson;
 }

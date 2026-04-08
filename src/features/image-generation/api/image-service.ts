@@ -139,26 +139,54 @@ export async function generateSectionImage(
     aspectRatio,
   } = params;
 
-  const systemPrompt = buildSystemPrompt(productName, productFeatures);
+  const productInfoJson = params.productInfoJson;
 
-  let sectionPrompt: string;
-  if (track === 'plan' && 'headline' in section && section.headline) {
-    // Track 1: Claude 기획 데이터 활용
-    sectionPrompt = `[섹션 ${index + 1}/${totalSections} — ${section.name}]
+  // JSON 프롬프트가 있으면 영문 프롬프트 조합, 없으면 기존 한글 방식
+  let prompt: string;
 
-텍스트 내용:
-- 헤드라인: ${section.headline}
-- 서브카피: ${'subCopy' in section ? section.subCopy : ''}
+  if (track === 'plan' && 'promptJson' in section && section.promptJson) {
+    const pj = section.promptJson;
+    const pi = productInfoJson;
 
-이 섹션에 맞는 상세페이지 이미지를 만들어주세요.`;
+    // 영문 프롬프트 조합 (JSON 기반)
+    prompt = `Based on the provided reference images. Professional product photography of ${pi?.name || productName}.
+
+Composition: ${pj.fromReference.composition}
+Camera angle: ${pj.fromReference.cameraAngle}
+Lighting: ${pj.fromReference.lighting}
+Product occupancy: ${pj.fromReference.productOccupancy}
+Negative space: ${pj.fromReference.negativeSpace}
+
+Background: ${pj.adaptedForProduct.backgroundColor}
+Props: ${pj.adaptedForProduct.props.join(', ') || 'none'}
+Tone/mood: ${pj.adaptedForProduct.toneMood}
+Color palette: ${pj.adaptedForProduct.colorPalette}
+
+${pj.scaleRules ? `Scale rules: ${pj.scaleRules}` : ''}
+${pj.additionalDirections ? `Additional: ${pj.additionalDirections}` : ''}
+
+The product packaging design must remain strictly unchanged. ${pj.packageIntegrity}
+${pj.frontMarkings ? `Do not warp the Product Package Front Statement Markings: ${pj.frontMarkings}` : ''}
+
+No text, no labels, no headlines in the image. Pure visual only.
+No illustrations, no cartoons, no clipart. Realistic photography only.
+No human faces — hands and arms only.
+No fake certification marks or fabricated data.
+Ultra high resolution, commercial quality.`;
   } else {
-    // Track 2: 섹션 이름만
-    const label = 'label' in section ? section.label : section.name;
-    sectionPrompt = `[섹션 ${index + 1}/${totalSections} — ${label}]
+    // 기존 방식 (Track 2 또는 JSON 없는 경우)
+    const systemPrompt = buildSystemPrompt(productName, productFeatures);
+    let sectionPrompt: string;
+    if (track === 'plan' && 'headline' in section && section.headline) {
+      sectionPrompt = `[${section.name}]
 이 섹션에 맞는 상세페이지 이미지를 만들어주세요.`;
+    } else {
+      const label = 'label' in section ? section.label : section.name;
+      sectionPrompt = `[${label}]
+이 섹션에 맞는 상세페이지 이미지를 만들어주세요.`;
+    }
+    prompt = systemPrompt + '\n\n' + sectionPrompt;
   }
-
-  const prompt = systemPrompt + '\n\n' + sectionPrompt;
 
   // Parts 구성: 프롬프트 → 제품이미지 → 라벨 → 레퍼런스 → 라벨
   const parts: Array<{ text: string } | { inlineData: { mimeType: string; data: string } }> = [];

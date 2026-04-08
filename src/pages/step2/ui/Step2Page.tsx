@@ -2,10 +2,10 @@ import { useState, useCallback } from 'react';
 import { useProductStore } from '@/entities/product';
 import { useImageStore } from '@/entities/image';
 import { generateSectionImage, editSectionImage } from '@/features/image-generation';
-import { buildPlanPrompt, callClaudeForPlan, parseSections } from '@/features/plan-generation';
+import { buildPlanPrompt, callClaudeForPlan, parseSections, parseProductJson } from '@/features/plan-generation';
 import { FIXED_SECTIONS } from '@/shared/config/sections';
 import { MODEL_CONFIG, BACKEND_URL, PLATFORM_CONFIGS } from '@/shared/config/constants';
-import type { GenerationTrack } from '@/shared/types';
+import type { GenerationTrack, ProductInfoJson } from '@/shared/types';
 import { resizeImage, base64ToBlob } from '@/features/image-generation';
 
 export function Step2Page() {
@@ -30,11 +30,20 @@ export function Step2Page() {
 
     try {
       const prompt = buildPlanPrompt(productName, productFeatures);
-      console.log('[Track1] Claude 호출 시작...');
-      const response = await callClaudeForPlan(prompt, { useBackend, backendUrl: BACKEND_URL });
+      console.log('[Track1] Claude 멀티모달 호출 시작...');
+      const response = await callClaudeForPlan(
+        prompt,
+        { useBackend, backendUrl: BACKEND_URL },
+        { productImage, referenceImages, toneReferenceImages }
+      );
       console.log('[Track1] Claude 응답 길이:', response.length);
+
+      // 제품 정보 JSON 파싱
+      const productInfoJson: ProductInfoJson | null = parseProductJson(response);
+      console.log('[Track1] 제품 JSON:', productInfoJson ? '파싱 성공' : '파싱 실패');
+
       const sections = parseSections(response);
-      console.log('[Track1] 파싱된 섹션:', sections.length);
+      console.log('[Track1] 파싱된 섹션:', sections.length, '/ JSON 포함:', sections.filter(s => s.promptJson).length);
       if (sections.length === 0) {
         throw new Error('기획서에서 섹션을 파싱하지 못했습니다. 다시 시도해주세요.');
       }
@@ -58,6 +67,7 @@ export function Step2Page() {
             productFeatures,
             track: 'plan',
             aspectRatio,
+            productInfoJson: productInfoJson || undefined,
           });
           setGeneratedImages((prev) => ({ ...prev, [i]: { data: result.dataUrl, prompt: result.prompt } }));
         } catch (err) {
