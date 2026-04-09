@@ -15,6 +15,7 @@ export function Step2Page() {
   const {
     uploadedImages, generatedImages, setGeneratedImages, useBackend, geminiApiKey, isGenerating, setIsGenerating, generationProgress, setGenerationProgress, aspectRatio, setAspectRatio,
     step2Phase: phase, setStep2Phase: setPhase,
+    mainReference, setMainReference,
     sectionRefs, setSectionRefs,
     productInfoJson, setProductInfoJson,
   } = useImageStore();
@@ -125,11 +126,16 @@ export function Step2Page() {
     try {
       for (let i = 0; i < sections.length; i++) {
         try {
-          // Use section-specific reference if uploaded, otherwise global references
+          // 우선순위: 섹션 레퍼런스 > 메인 레퍼런스 > 없음
           const sectionSpecificRef = sectionRefs[i];
-          const effectiveReferenceImages = sectionSpecificRef ? [sectionSpecificRef] : referenceImages;
+          const effectiveReferenceImages = sectionSpecificRef
+            ? [sectionSpecificRef]
+            : mainReference
+              ? [mainReference]
+              : [];
 
-          console.log(`[Gemini Prompt] Section ${i + 1}: ref=${sectionSpecificRef ? 'section-specific' : 'global'}, aspectRatio=${aspectRatio}`);
+          const refSource = sectionSpecificRef ? 'section' : mainReference ? 'main' : 'none';
+          console.log(`[Gemini] Section ${i + 1}: ref=${refSource}, aspectRatio=${aspectRatio}`);
 
           const result = await generateSectionImage({
             section: sections[i],
@@ -315,9 +321,46 @@ export function Step2Page() {
             </button>
           </div>
 
-          {/* Aspect Ratio Selector */}
-          <div className="bg-bg-secondary border border-border-subtle rounded-xl p-4 mb-4">
-            <label className="text-sm font-medium text-text-secondary mb-2 block">이미지 비율</label>
+          {/* 메인 레퍼런스 + 비율 */}
+          <div className="bg-bg-secondary border border-border-subtle rounded-xl p-4 mb-4 flex gap-6">
+            {/* 메인 레퍼런스 */}
+            <div className="shrink-0">
+              <label className="text-sm font-medium text-text-secondary mb-2 block">메인 레퍼런스</label>
+              <p className="text-[10px] text-text-tertiary mb-2">섹션별 레퍼런스 미지정 시 적용</p>
+              {mainReference ? (
+                <div className="relative group w-20 h-20">
+                  <img src={mainReference} alt="main-ref" className="w-20 h-20 object-cover rounded-lg border border-border-subtle" />
+                  <button
+                    onClick={() => setMainReference('')}
+                    className="absolute -top-1.5 -right-1.5 w-5 h-5 bg-red-500 text-white rounded-full text-xs flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity"
+                  >
+                    x
+                  </button>
+                </div>
+              ) : (
+                <label className="w-20 h-20 border-2 border-dashed border-border-subtle rounded-lg flex flex-col items-center justify-center cursor-pointer hover:border-accent-primary transition-colors bg-bg-tertiary">
+                  <span className="text-text-tertiary text-lg">+</span>
+                  <input
+                    type="file"
+                    accept="image/*"
+                    className="hidden"
+                    onChange={(e) => {
+                      const file = e.target.files?.[0];
+                      if (file) {
+                        const reader = new FileReader();
+                        reader.onload = () => setMainReference(reader.result as string);
+                        reader.readAsDataURL(file);
+                      }
+                      if (e.target) e.target.value = '';
+                    }}
+                  />
+                </label>
+              )}
+            </div>
+
+            {/* 비율 선택 */}
+            <div className="flex-1">
+              <label className="text-sm font-medium text-text-secondary mb-2 block">이미지 비율</label>
             <div className="flex gap-2">
               {ASPECT_RATIO_OPTIONS.map((ratio) => (
                 <button
@@ -332,6 +375,7 @@ export function Step2Page() {
                   {ratio}
                 </button>
               ))}
+            </div>
             </div>
           </div>
 

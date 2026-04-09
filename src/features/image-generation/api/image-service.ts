@@ -202,30 +202,44 @@ Ultra high resolution, commercial quality.`;
     });
   }
 
-  // 톤 레퍼런스 (색감/타이포 톤 — 전 섹션 동일 적용, 복수 지원)
-  const validToneRefs = toneReferenceImages.filter(Boolean);
-  if (validToneRefs.length > 0) {
-    for (const toneRef of validToneRefs) {
-      parts.push({
-        inlineData: { mimeType: 'image/jpeg', data: safeExtractBase64(toneRef) },
-      });
-    }
-    parts.push({
-      text: `위 ${validToneRefs.length}장은 톤/색감 레퍼런스입니다. 이 이미지들의 배경색, 타이포그래피 색상, 전체적인 톤을 종합적으로 참고하여 모든 섹션에 동일하게 적용하세요.`,
-    });
-  }
+  // 레퍼런스 이미지 전달 (섹션별 > 메인 폴백)
+  const validRefs = referenceImages.filter(Boolean);
+  const sectionType = 'sectionType' in section ? section.sectionType : '';
+  const isMainRefFallback = validRefs.length > 0 && !params.referenceImages.some(r => r && r !== validRefs[0]);
 
-  // 레이아웃 레퍼런스 (구조/배치 참고, 복수 지원)
-  const validLayoutRefs = referenceImages.filter(Boolean);
-  if (validLayoutRefs.length > 0) {
-    for (const layoutRef of validLayoutRefs) {
+  if (validRefs.length > 0) {
+    for (const ref of validRefs) {
       parts.push({
-        inlineData: { mimeType: 'image/jpeg', data: safeExtractBase64(layoutRef) },
+        inlineData: { mimeType: 'image/jpeg', data: safeExtractBase64(ref) },
       });
     }
-    parts.push({
-      text: `위 ${validLayoutRefs.length}장은 레이아웃 레퍼런스입니다. 현재 섹션의 내용에 가장 유사한 구도를 가진 1~2장을 골라 레이아웃 구조, 여백, 정보 배치 방식을 참고하세요. 색상/톤은 톤 레퍼런스를 따르세요.`,
-    });
+
+    if (isMainRefFallback) {
+      // 메인 레퍼런스 폴백 — 톤/스타일만 참고, 구도는 섹션 유형에 맞게
+      const sectionCompositionGuide: Record<string, string> = {
+        hero: 'Hero section: product centered prominently, bold and impactful first impression. Product should dominate the frame.',
+        empathy: 'Empathy section: emotional, relatable scene. No product package. Show the situation or mood that connects with the customer.',
+        point: 'Feature point section: highlight one specific product benefit. Clean layout with focus on the key selling point.',
+        sizzle: 'Sizzle section: close-up appetizing shot. Emphasize texture, color, and sensory appeal of the product.',
+        trust: 'Trust section: raw ingredients and product together. Convey quality and transparency.',
+        divider: 'Transition banner: simple, clean break between sections. Product with minimal styling.',
+        lifestyle: 'Lifestyle section: product in everyday use context. Natural, candid feeling. No product package directly.',
+        situation: 'Usage scenario section: show different occasions to enjoy the product. Grid-like composition with multiple scenes.',
+        review: 'Review section: product with customer testimonial feel. Warm, trustworthy composition.',
+        cta: 'CTA section: product presented attractively as final push. Multiple angles or products grouped together.',
+        spec: 'Product info section: clean, informational layout. Product with specs clearly visible.',
+      };
+      const guide = sectionCompositionGuide[sectionType] || 'Create a composition appropriate for this section type.';
+
+      parts.push({
+        text: `This is a main reference image. Use it for overall tone, color mood, and style only. Do NOT copy its composition directly. Instead: ${guide}`,
+      });
+    } else {
+      // 섹션 전용 레퍼런스 — 구도/톤 모두 참고
+      parts.push({
+        text: 'This is a section-specific reference. Follow its composition, camera angle, lighting, and overall style. Adapt colors and props to match the product.',
+      });
+    }
   }
 
   // Gemini API 직접 호출 (헤더에 키 — URL 노출 방지)

@@ -33,6 +33,10 @@ interface ImageState {
   step2Phase: Step2Phase;
   setStep2Phase: (v: Step2Phase) => void;
 
+  // 메인 레퍼런스 (섹션별 미지정 시 폴백)
+  mainReference: string;
+  setMainReference: (v: string) => void;
+
   // 섹션별 레퍼런스 (스텝 이동 시 유지)
   sectionRefs: Record<number, string>;
   setSectionRefs: (refs: Record<number, string> | ((prev: Record<number, string>) => Record<number, string>)) => void;
@@ -73,6 +77,9 @@ export const useImageStore = create<ImageState>()(
 
       step2Phase: 'select',
       setStep2Phase: (v) => set({ step2Phase: v }),
+
+      mainReference: '',
+      setMainReference: (v) => set({ mainReference: v }),
 
       sectionRefs: {},
       setSectionRefs: (refs) =>
