@@ -3,6 +3,7 @@ import { AppLayout } from '@/widgets/header';
 import { StepNav } from '@/widgets/step-nav';
 import { Step1Page } from '@/pages/step1';
 import { Step2Page } from '@/pages/step2';
+import { DetailPreviewPage } from '@/pages/detail-preview';
 import { Toast } from '@/shared/ui/components/Toast';
 
 export default function App() {
@@ -13,6 +14,7 @@ export default function App() {
       <StepNav />
       {currentStep === 1 && <Step1Page />}
       {currentStep === 2 && <Step2Page />}
+      {currentStep === 3 && <DetailPreviewPage />}
 
       {/* Toasts */}
       <Toast />

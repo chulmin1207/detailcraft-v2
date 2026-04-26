@@ -4,6 +4,14 @@
 
 import type { GenerateImageParams } from '@/shared/types';
 
+type GeminiPart = { text: string } | { inlineData: { mimeType: string; data: string } };
+type GeminiResponse = {
+  candidates?: Array<{
+    content?: { parts?: Array<{ text?: string; inlineData?: { mimeType?: string; data?: string } }> };
+    finishReason?: string;
+  }>;
+};
+
 // ===== Base64 헬퍼 =====
 function safeExtractBase64(dataUrl: string): string {
   const parts = dataUrl.split(',');
@@ -37,6 +45,68 @@ async function fetchWithRetry(
     }
   }
   throw lastError || new Error('API 요청 실패');
+}
+
+async function parseGeminiError(response: Response): Promise<string> {
+  const error = await response.json().catch(() => ({}));
+  return (
+    (error as { error?: { message?: string } }).error?.message ||
+    (error as { message?: string }).message ||
+    `API 오류 (${response.status})`
+  );
+}
+
+async function requestGeminiContent(params: {
+  model: string;
+  requestBody: Record<string, unknown>;
+  useBackend: boolean;
+  backendUrl: string;
+  geminiApiKey: string;
+  timeout: number;
+}): Promise<GeminiResponse> {
+  const { model, requestBody, useBackend, backendUrl, geminiApiKey, timeout } = params;
+
+  if (useBackend && !geminiApiKey) {
+    const response = await fetchWithRetry(
+      `${backendUrl}/api/gemini`,
+      {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ model, ...requestBody }),
+      },
+      timeout,
+    );
+
+    if (!response.ok) {
+      throw new Error(await parseGeminiError(response));
+    }
+
+    return response.json() as Promise<GeminiResponse>;
+  }
+
+  if (!geminiApiKey) {
+    throw new Error('Gemini API 키가 없습니다.');
+  }
+
+  const geminiUrl = `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent`;
+  const response = await fetchWithRetry(
+    geminiUrl,
+    {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'x-goog-api-key': geminiApiKey,
+      },
+      body: JSON.stringify(requestBody),
+    },
+    timeout,
+  );
+
+  if (!response.ok) {
+    throw new Error(await parseGeminiError(response));
+  }
+
+  return response.json() as Promise<GeminiResponse>;
 }
 
 // ===== 이미지 압축 =====
@@ -124,12 +194,9 @@ export async function generateSectionImage(
 ): Promise<{ dataUrl: string; prompt: string }> {
   const {
     section,
-    index,
-    totalSections,
     modelConfig,
     productImage,
     referenceImages,
-    toneReferenceImages,
     useBackend,
     backendUrl,
     geminiApiKey,
@@ -188,7 +255,7 @@ Ultra high resolution, commercial quality.`;
   }
 
   // Parts 구성: 프롬프트 → 제품이미지 → 라벨 → 레퍼런스 → 라벨
-  const parts: Array<{ text: string } | { inlineData: { mimeType: string; data: string } }> = [];
+  const parts: GeminiPart[] = [];
 
   parts.push({ text: prompt });
 
@@ -242,19 +309,6 @@ Ultra high resolution, commercial quality.`;
     }
   }
 
-  // Gemini API 직접 호출 (헤더에 키 — URL 노출 방지)
-  let apiKey = geminiApiKey;
-  if (!apiKey && useBackend) {
-    const configRes = await fetch(`${backendUrl}/api/config`);
-    if (configRes.ok) {
-      const config = await configRes.json() as { geminiKey?: string };
-      apiKey = config.geminiKey || '';
-    }
-  }
-  if (!apiKey) throw new Error('Gemini API 키가 없습니다.');
-
-  const geminiUrl = `https://generativelanguage.googleapis.com/v1beta/models/${modelConfig.model}:generateContent`;
-
   const reqBody: Record<string, unknown> = {
     contents: [{ parts }],
     generationConfig: {
@@ -266,35 +320,17 @@ Ultra high resolution, commercial quality.`;
     },
   };
 
-  const response = await fetchWithRetry(
-    geminiUrl,
-    {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'x-goog-api-key': apiKey,
-      },
-      body: JSON.stringify(reqBody),
-    },
-    modelConfig.timeout
-  );
-
-  if (!response.ok) {
-    const error = await response.json().catch(() => ({}));
-    throw new Error(
-      (error as { error?: { message?: string } }).error?.message || `API 오류 (${response.status})`
-    );
-  }
-
-  const data = await response.json();
+  const data = await requestGeminiContent({
+    model: modelConfig.model,
+    requestBody: reqBody,
+    useBackend,
+    backendUrl,
+    geminiApiKey,
+    timeout: modelConfig.timeout,
+  });
   console.log('[Gemini Response]', JSON.stringify(data).slice(0, 500));
 
-  const candidates = (data as {
-    candidates?: Array<{
-      content?: { parts?: Array<{ text?: string; inlineData?: { mimeType?: string; data?: string } }> };
-      finishReason?: string;
-    }>;
-  }).candidates || [];
+  const candidates = data.candidates || [];
 
   for (const candidate of candidates) {
     if (candidate.finishReason && candidate.finishReason !== 'STOP') {
@@ -324,10 +360,11 @@ export async function editSectionImage(params: {
   useBackend: boolean;
   backendUrl: string;
   geminiApiKey: string;
+  aspectRatio?: string;
 }): Promise<{ dataUrl: string }> {
-  const { originalImage, editInstruction, modelConfig, useBackend, backendUrl, geminiApiKey } = params;
+  const { originalImage, editInstruction, modelConfig, useBackend, backendUrl, geminiApiKey, aspectRatio = '3:4' } = params;
 
-  const parts: Array<{ text: string } | { inlineData: { mimeType: string; data: string } }> = [];
+  const parts: GeminiPart[] = [];
 
   // 원본 이미지 (그대로 전송 — 품질 유지)
   parts.push({
@@ -342,19 +379,6 @@ export async function editSectionImage(params: {
 ${editInstruction}`,
   });
 
-  // API 키 (헤더 방식)
-  let apiKey = geminiApiKey;
-  if (!apiKey && useBackend) {
-    const configRes = await fetch(`${backendUrl}/api/config`);
-    if (configRes.ok) {
-      const config = await configRes.json() as { geminiKey?: string };
-      apiKey = config.geminiKey || '';
-    }
-  }
-  if (!apiKey) throw new Error('Gemini API 키가 없습니다.');
-
-  const geminiUrl = `https://generativelanguage.googleapis.com/v1beta/models/${modelConfig.model}:generateContent`;
-
   const reqBody: Record<string, unknown> = {
     contents: [{ parts }],
     generationConfig: {
@@ -366,21 +390,15 @@ ${editInstruction}`,
     },
   };
 
-  const response = await fetchWithRetry(
-    geminiUrl,
-    { method: 'POST', headers: { 'Content-Type': 'application/json', 'x-goog-api-key': apiKey }, body: JSON.stringify(reqBody) },
-    modelConfig.timeout,
-  );
-
-  if (!response.ok) {
-    const error = await response.json().catch(() => ({}));
-    throw new Error((error as { error?: { message?: string } }).error?.message || `API 오류 (${response.status})`);
-  }
-
-  const data = await response.json();
-  const candidates = (data as {
-    candidates?: Array<{ content?: { parts?: Array<{ inlineData?: { mimeType?: string; data?: string } }> } }>;
-  }).candidates || [];
+  const data = await requestGeminiContent({
+    model: modelConfig.model,
+    requestBody: reqBody,
+    useBackend,
+    backendUrl,
+    geminiApiKey,
+    timeout: modelConfig.timeout,
+  });
+  const candidates = data.candidates || [];
 
   for (const candidate of candidates) {
     for (const part of (candidate.content?.parts || [])) {

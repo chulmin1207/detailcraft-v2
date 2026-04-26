@@ -3,7 +3,7 @@ import type { ModelConfig, PlatformConfig, SectionType } from '@/shared/types';
 export const APP_NAME = 'DetailCraft';
 
 // ===== BACKEND =====
-export const BACKEND_URL = 'https://detailcraft-backend.vercel.app';
+export const BACKEND_URL = (import.meta.env.VITE_BACKEND_URL || '').replace(/\/$/, '');
 
 // ===== LOCALSTORAGE KEYS =====
 export const LS_GEMINI_KEY = 'detailcraft_gemini_key';

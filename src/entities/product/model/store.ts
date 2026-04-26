@@ -35,7 +35,7 @@ export const useProductStore = create<ProductState>()(
 
       currentStep: 1,
       goToStep: (step) => {
-        if (step >= 1 && step <= 2) set({ currentStep: step });
+        if (step >= 1 && step <= 3) set({ currentStep: step });
       },
 
       generatedSections: [],

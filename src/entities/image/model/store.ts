@@ -51,7 +51,9 @@ export const useImageStore = create<ImageState>()(
       geminiApiKey: (() => { try { return localStorage.getItem(LS_GEMINI_KEY) || ''; } catch { return ''; } })(),
       useBackend: true,
       saveGeminiKey: (key) => {
-        try { localStorage.setItem(LS_GEMINI_KEY, key); } catch {}
+        try { localStorage.setItem(LS_GEMINI_KEY, key); } catch {
+          // localStorage can be unavailable in restricted browser contexts.
+        }
         set({ geminiApiKey: key });
       },
 

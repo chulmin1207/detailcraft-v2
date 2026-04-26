@@ -1,14 +1,26 @@
-import { useState, useCallback, useEffect, useRef } from 'react';
+import { useState, useCallback, useEffect, useMemo, useRef } from 'react';
 import { useProductStore } from '@/entities/product';
 import { useImageStore } from '@/entities/image';
 import { generateSectionImage, editSectionImage, compressImageForAPI } from '@/features/image-generation';
 import { buildPlanPrompt, callClaudeForPlan, parseSections, parseProductJson } from '@/features/plan-generation';
 import { FIXED_SECTIONS } from '@/shared/config/sections';
 import { MODEL_CONFIG, BACKEND_URL, PLATFORM_CONFIGS } from '@/shared/config/constants';
-import type { GenerationTrack, ProductInfoJson, Section } from '@/shared/types';
+import type { FixedSection, GenerationTrack, ProductInfoJson, Section } from '@/shared/types';
 import { resizeImage, base64ToBlob } from '@/features/image-generation';
 
 const ASPECT_RATIO_OPTIONS = ['1:1', '1:4', '1:8', '3:2', '3:4'] as const;
+
+function getSectionDisplayName(section: Section | FixedSection): string {
+  return 'label' in section ? section.label : section.name;
+}
+
+function getSectionHeadline(section: Section | FixedSection): string {
+  return 'headline' in section ? section.headline : '';
+}
+
+function getSectionSubCopy(section: Section | FixedSection): string {
+  return 'subCopy' in section ? section.subCopy : '';
+}
 
 export function Step2Page() {
   const { productName, productFeatures, selectedTrack, setSelectedTrack, generatedSections, setGeneratedSections } = useProductStore();
@@ -30,9 +42,9 @@ export function Step2Page() {
   const fileInputRefs = useRef<Record<number, HTMLInputElement | null>>({});
 
   const productImage = uploadedImages.product[0] || '';
-  const referenceImages = uploadedImages.references || [];
+  const referenceImages = uploadedImages.references;
   // 톤 레퍼런스는 Step 1에서 제거됨 — 빈 배열로 처리
-  const toneReferenceImages: string[] = [];
+  const toneReferenceImages = useMemo<string[]>(() => [], []);
 
   // Paste event listener for section reference upload
   useEffect(() => {
@@ -170,7 +182,7 @@ export function Step2Page() {
     } finally {
       setIsGenerating(false);
     }
-  }, [selectedTrack, generatedSections, sectionRefs, referenceImages, toneReferenceImages, productImage, useBackend, geminiApiKey, aspectRatio, productName, productFeatures, productInfoJson, setIsGenerating, setGenerationProgress, setGeneratedImages, setPhase]);
+  }, [selectedTrack, generatedSections, sectionRefs, mainReference, toneReferenceImages, productImage, useBackend, geminiApiKey, aspectRatio, productName, productFeatures, productInfoJson, setIsGenerating, setGenerationProgress, setGeneratedImages, setPhase]);
 
   // Retry image generation (keeps plan, goes back to generating)
   const retryImageGeneration = useCallback(async () => {
@@ -194,6 +206,7 @@ export function Step2Page() {
         useBackend,
         backendUrl: BACKEND_URL,
         geminiApiKey,
+        aspectRatio,
       });
       console.log('[Edit] Edit complete, replacing image');
       setGeneratedImages((prev) => ({
@@ -208,7 +221,7 @@ export function Step2Page() {
     } finally {
       setIsEditing(false);
     }
-  }, [editingIndex, editPrompt, generatedImages, useBackend, geminiApiKey, setGeneratedImages]);
+  }, [editingIndex, editPrompt, generatedImages, useBackend, geminiApiKey, aspectRatio, setGeneratedImages]);
 
   // Download
   const handleDownload = useCallback(async () => {
@@ -248,7 +261,6 @@ export function Step2Page() {
   };
 
   const sections = selectedTrack === 'plan' ? generatedSections : FIXED_SECTIONS;
-  const imageEntries = Object.keys(generatedImages).length;
   const successCount = Object.values(generatedImages).filter((img) => img.data && !img.error).length;
   const totalSections = sections.length || FIXED_SECTIONS.length;
 
@@ -382,9 +394,9 @@ export function Step2Page() {
           {/* Section List */}
           <div className="space-y-3 mb-6">
             {sections.map((section, i) => {
-              const sectionName = 'label' in section ? (section as any).label : section.name;
-              const headline = 'headline' in section ? (section as any).headline : '';
-              const subCopy = 'subCopy' in section ? (section as any).subCopy : '';
+              const sectionName = getSectionDisplayName(section);
+              const headline = getSectionHeadline(section);
+              const subCopy = getSectionSubCopy(section);
 
               return (
                 <div
@@ -572,7 +584,7 @@ export function Step2Page() {
             {Array.from({ length: totalSections }).map((_, i) => {
               const img = generatedImages[i];
               const section = sections[i];
-              const sectionName = section ? ('label' in section ? (section as any).label : section.name) : `섹션 ${i + 1}`;
+              const sectionName = section ? getSectionDisplayName(section) : `섹션 ${i + 1}`;
 
               return (
                 <div

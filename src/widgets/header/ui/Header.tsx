@@ -9,25 +9,25 @@ export function Header() {
 
   return (
     <header
-      className="px-8 py-5 border-b border-border-subtle sticky top-0 z-[100] flex justify-between items-center backdrop-blur-[12px]"
+      className="px-4 py-4 sm:px-8 sm:py-5 border-b border-border-subtle sticky top-0 z-[100] flex justify-between items-center backdrop-blur-[12px]"
       style={{ background: 'var(--header-bg)' }}
     >
-      <div className="flex items-center gap-3">
+      <div className="flex min-w-0 items-center gap-3">
         <div
-          className="w-10 h-10 rounded-[10px] flex items-center justify-center text-xl"
+          className="w-10 h-10 shrink-0 rounded-[10px] flex items-center justify-center text-xl"
           style={{ background: 'var(--gradient-primary)', boxShadow: 'var(--shadow-glow)' }}
         >
           ⚡
         </div>
         <span
-          className="font-display text-[1.5rem] font-semibold"
+          className="truncate font-display text-[1.35rem] font-semibold sm:text-[1.5rem]"
           style={{ background: 'var(--gradient-primary)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent' }}
         >
           DetailCraft
         </span>
       </div>
 
-      <div className="flex items-center gap-3">
+      <div className="flex shrink-0 items-center gap-2 sm:gap-3">
         <button
           onClick={toggleTheme}
           title="라이트/다크 모드 전환"
@@ -36,12 +36,12 @@ export function Header() {
           {theme === 'dark' ? '🌙' : '☀️'}
         </button>
 
-        <div className={`flex items-center gap-2 px-3 py-1.5 bg-bg-tertiary border rounded-full text-[0.8rem] ${geminiConnected ? 'border-accent-success' : 'border-accent-danger'}`}>
+        <div className={`flex items-center gap-2 rounded-full border bg-bg-tertiary p-2 text-[0.8rem] sm:px-3 sm:py-1.5 ${geminiConnected ? 'border-accent-success' : 'border-accent-danger'}`}>
           <div
             className="w-1.5 h-1.5 rounded-full"
             style={geminiConnected ? { background: 'var(--accent-success)', boxShadow: '0 0 8px var(--accent-success)' } : { background: 'var(--accent-danger)' }}
           />
-          <span className="text-text-secondary">
+          <span className="hidden whitespace-nowrap text-text-secondary sm:inline">
             {useBackend ? 'AI 서버 연결' : geminiConnected ? 'API 연결됨' : 'API 미연결'}
           </span>
         </div>

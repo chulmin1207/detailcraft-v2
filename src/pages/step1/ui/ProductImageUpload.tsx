@@ -136,7 +136,17 @@ function useUploadZone(type: SlotType, max: number) {
 }
 
 export function ProductImageUpload() {
-  const product = useUploadZone('product', 1);
+  const {
+    images,
+    focused,
+    dragOver,
+    zoneRef,
+    handleClick,
+    handleDragOver,
+    handleDragLeave,
+    handleDrop,
+    handleRemove,
+  } = useUploadZone('product', 1);
 
   const zoneClass = (focused: boolean, dragOver: boolean) => [
     'border-2 border-dashed rounded-xl p-4 min-h-[200px] cursor-pointer transition-all duration-200 outline-none',
@@ -157,19 +167,19 @@ export function ProductImageUpload() {
           <span className="block text-xs text-text-tertiary mt-0.5">레퍼런스 이미지는 기획 후 섹션별로 지정합니다</span>
         </label>
         <div
-          ref={product.zoneRef}
+          ref={zoneRef}
           tabIndex={0}
-          onClick={product.handleClick}
-          onDragOver={product.handleDragOver}
-          onDragLeave={product.handleDragLeave}
-          onDrop={product.handleDrop}
-          className={zoneClass(product.focused, product.dragOver)}
+          onClick={handleClick}
+          onDragOver={handleDragOver}
+          onDragLeave={handleDragLeave}
+          onDrop={handleDrop}
+          className={zoneClass(focused, dragOver)}
         >
-          {product.images.length > 0 ? (
+          {images.length > 0 ? (
             <div className="relative w-full">
-              <img src={product.images[0]} alt="제품" className="w-full h-48 object-contain rounded-lg" />
+              <img src={images[0]} alt="제품" className="w-full h-48 object-contain rounded-lg" />
               <button
-                onClick={(e) => { e.stopPropagation(); product.handleRemove(0); }}
+                onClick={(e) => { e.stopPropagation(); handleRemove(0); }}
                 className="absolute top-1 right-1 w-6 h-6 bg-red-500 text-white rounded-full text-xs flex items-center justify-center hover:bg-red-600"
               >
                 ✕
@@ -180,7 +190,7 @@ export function ProductImageUpload() {
               <div className="text-3xl mb-2">📦</div>
               <div className="text-sm font-medium">제품/패키지 이미지</div>
               <div className="text-xs mt-1.5 text-text-tertiary/70">
-                {product.focused
+                {focused
                   ? '붙여넣기 (Ctrl+V) 또는 클릭하여 파일 선택'
                   : '클릭 · 드래그 · 붙여넣기'}
               </div>
